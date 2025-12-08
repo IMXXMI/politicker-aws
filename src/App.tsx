@@ -12,15 +12,18 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import './App.css';
 
+
+  
 const firebaseConfig = {
-  apiKey: "AIzaSyDy80QoWKdhCc_-Cdbses-eRTaxnGQxP1s",
-  authDomain: "politickerapp-286cf.firebaseapp.com",
-  projectId: "politickerapp-286cf",
-  storageBucket: "politickerapp-286cf.firebasestorage.app",
-  messagingSenderId: "1015982715206",
-  appId: "1:1015982715206:web:15b0e0319dab0e1cfc7547",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
   measurementId: "G-27487L2DTT"
 };
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -118,11 +121,14 @@ function App() {
     }
   };
 
-  // Voter verification
-  const verifyVoter = async (zipCode: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`${PROXY}${encodeURIComponent(`https://www.googleapis.com/civicinfo/v2/voterinfo?key=AIzaSyAKmkbZYzz3lmsGI1wzaLcfoL8fHSMUFRc&address=${zipCode}&electionId=2000`)}`);
-      const data = await res.json();
+// Voter verification
+const verifyVoter = async (zipCode: string): Promise<boolean> => {
+  try {
+    const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
+if (!apiKey) throw new Error('Google API key missing');
+const url = `https://www.googleapis.com/civicinfo/v2/voterinfo?key=${apiKey}&address=${zipCode}&electionId=2000`;
+const res = await fetch(`${PROXY}${encodeURIComponent(url)}`);
+    const data = await res.json();
       if (data.dropOffLocations || data.pollingLocations) {
         setVoterVerified(true);
         setRegisteredVotersEstimate(10000); // Mock
@@ -259,16 +265,26 @@ const fetchReps = async (zipCode: string) => {
   console.log('fetchReps called with ZIP:', zipCode); // Debug
   setLoading(true);
  try {
-  const apiKey = 'ed468cbd42964c8727ce9697d44b92e48ebd99c'; // Verify key in geocod.io dashboard
-  const fields = 'cd,stateleg'; // Geocodio fields
-  const res = await fetch(`https://api.geocod.io/v1.9/geocode?q=${zipCode}&fields=${fields}&api_key=${apiKey}`);
-  console.log('Geocodio res:', res.status); // Debug
-  if (!res.ok) throw new Error(`Geocodio fail: ${res.status}`);
-  const data = await res.json();
-  console.log('Geocodio data.results.length:', data.results?.length || 0); // Debug
-  if (!data.results || data.results.length === 0) throw new Error('No results');
+const apiKey = process.env.REACT_APP_GEOCODIO_API_KEY;
+if (!apiKey) {
+  console.error('Geocodio API key missing from .env');
+  throw new Error('API key missing');
+}
+console.log('API Key partial:', apiKey.substring(0, 10) + '...'); // Debug without full key
 
-  const result = data.results[0];
+const fields = 'cd,stateleg'; // Abbreviated for congressional_districts and state_legislative_districts // Add required fields
+const url = `https://api.geocod.io/v1.9/geocode?q=${zipCode}&fields=${fields}&api_key=${apiKey}`;
+const res = await fetch(`${PROXY}${encodeURIComponent(url)}`);;
+const responseText = await res.text();
+if (!res.ok) throw new Error(`Geocodio fail: ${res.status}`);
+if (responseText.startsWith('<!DOCTYPE')) throw new Error('Proxy returned HTML');
+const data = JSON.parse(responseText);
+  
+ console.log('Geocodio data:', data); // Debug — matches your test
+if (!data.results || data.results.length === 0) throw new Error('No results');
+const result = data.results[0];
+// ... rest of parsing (already good)
+
   const allReps = [];
   const countyName = result.address_components?.county || 'Unknown County';
   setCounty(countyName);
@@ -352,9 +368,12 @@ const fetchSampleBill = async () => {
   let latestAction = 'Pending';
 
   try {
-    const apiKey = 'z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t'; // Your Congress key
-    const congress = 118; // Current congress
+   const apiKey = process.env.REACT_APP_CONGRESS_API_KEY;
+   const congress = 118; // Current congress
 
+if (!apiKey) throw new Error('Congress API key missing');
+const listRes = await fetch(`${PROXY}${encodeURIComponent(`https://api.congress.gov/v3/bill?api_key=$$ {apiKey}&limit=1&congress= $${congress}&format=json`)}`);
+    
    const res = await fetch('/api/bill');
 console.log('Bill proxy res status:', res.status); // Debug
 if (!res.ok) throw new Error('Proxy fail');
@@ -372,6 +391,7 @@ const billId = `${billData.congress}-${billData.billType}-${billData.number}`;
       const earmarkMatches = fullText.match(/\$[\d,]+(?:\.\d+)?\s*for\s+the\s+(?:use\s+of|benefit\s+of|project\s+in|construction\s+of)\s+([^\.]+?)(?=\.|for\s+\$)/gi) || [];
       earmarks = earmarkMatches.slice(0, 5).map(match => match.trim());
     }
+   
 
     const inferredPros = actions?.[0]?.classification?.includes('Passed') ? 'Advances key policy' : 'Supports rights/allies';
     const inferredCons = fullText.toLowerCase().includes('review') ? 'Potential bureaucratic costs' : 'Possible tensions/costs';
@@ -406,18 +426,29 @@ const billId = `${billData.congress}-${billData.billType}-${billData.number}`;
     if (personId === 'unknown') {
       const searchUrl = `https://www.govtrack.us/api/v2/person?search=${encodeURIComponent(rep.name)}&format=json`;
       const encodedSearch = encodeURIComponent(searchUrl);
-      const searchRes = await fetch(`https://corsproxy.io/?${encodedSearch}`);
-      const searchData = await searchRes.json();
-      personId = searchData.objects[0]?.id || '412478';
-      console.log('GovTrack ID:', personId); // Debug
+      // Search
+const searchRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`);
+const responseText = await searchRes.text(); // Raw text first
+if (!searchRes.ok) {
+  console.error('Search res not OK:', searchRes.status);
+  throw new Error('GovTrack search fail');
+}
+const text = responseText; // Use raw text
+if (text.startsWith('<!DOCTYPE')) {
+  throw new Error('GovTrack returned HTML — quota hit or bad key');
+}
+const searchData = JSON.parse(text);
+personId = searchData.objects[0]?.id || '412478';
+console.log('GovTrack ID:', personId); // Debug
     }
 
     // Bio
     const bioUrl = `https://www.govtrack.us/api/v2/person/${personId}?format=json`;
     const encodedBio = encodeURIComponent(bioUrl);
-    const bioRes = await fetch(`https://api.allorigins.win/get?url=${encodedBio}`);
-    const bioText = await bioRes.json();
-    const bioData = JSON.parse(bioText.contents);
+    const bioRes = await fetch(`${PROXY}${encodeURIComponent(bioUrl)}`);
+const bioText = await bioRes.text(); // Raw text
+if (bioText.startsWith('<!DOCTYPE')) throw new Error('GovTrack quota');
+const bioData = JSON.parse(bioText);
     if (bioRes.ok) {
       const bio = bioData.object?.bio || 'Bio unavailable.';
       setRepDetails(prevState => ({ ...prevState, bio }));

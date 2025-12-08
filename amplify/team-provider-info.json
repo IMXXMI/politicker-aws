@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-politicker-dev-30414-authRole",
+      "UnauthRoleArn": "arn:aws:iam::291393993379:role/amplify-politicker-dev-30414-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::291393993379:role/amplify-politicker-dev-30414-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-politicker-dev-30414-deployment",
+      "UnauthRoleName": "amplify-politicker-dev-30414-unauthRole",
+      "StackName": "amplify-politicker-dev-30414",
+      "StackId": "arn:aws:cloudformation:us-east-2:291393993379:stack/amplify-politicker-dev-30414/59bb1c80-d329-11f0-b621-0a075cf82ecb",
+      "AmplifyAppId": "duly49kc98uca"
+    },
+    "categories": {
+      "api": {
+        "politicker": {}
+      },
+      "hosting": {
+        "S3AndCloudFront": {}
+      }
+    }
+  }
+}
