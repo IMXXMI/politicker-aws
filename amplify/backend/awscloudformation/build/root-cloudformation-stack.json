@@ -202,37 +202,27 @@
     "apipoliticker": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-dev-30414-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "Parameters": {
           "AppSyncApiName": "politicker",
           "DynamoDBBillingMode": "PAY_PER_REQUEST",
           "DynamoDBEnableServerSideEncryption": false,
-          "S3DeploymentBucket": "amplify-politicker-dev-30414-deployment",
-          "S3DeploymentRootKey": "amplify-appsync-files/ce60e42c878b5595c5a3e53a3cef4603a4e4e099",
-          "env": "dev"
-        }
-      }
-    },
-    "hostingS3AndCloudFront": {
-      "Type": "AWS::CloudFormation::Stack",
-      "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-dev-30414-deployment/amplify-cfn-templates/hosting/template.json",
-        "Parameters": {
-          "bucketName": "politicker-20251207011318-hostingbucket",
-          "env": "dev"
+          "S3DeploymentBucket": "amplify-politicker-awsapp-b5b7d-deployment",
+          "S3DeploymentRootKey": "amplify-appsync-files/510b01bc2099a75f774c392f6b4261a2c0b51497",
+          "env": "awsapp"
         }
       }
     },
     "functionapiProxy": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-dev-30414-deployment/amplify-cfn-templates/function/apiProxy-cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/apiProxy-cloudformation-template.json",
         "Parameters": {
           "geocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
           "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
           "secretsPathAmplifyAppId": "duly49kc98uca",
-          "deploymentBucketName": "amplify-politicker-dev-30414-deployment",
-          "s3Key": "amplify-builds/apiProxy-2b456b4c4d4178677161-build.zip",
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/apiProxy-38646d484351764e7850-build.zip",
           "apipolitickerGraphQLAPIIdOutput": {
             "Fn::GetAtt": [
               "apipoliticker",
@@ -251,7 +241,68 @@
               "Outputs.GraphQLAPIKeyOutput"
             ]
           },
-          "env": "dev"
+          "env": "awsapp"
+        }
+      }
+    },
+    "functionpoliticker7bef9220": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/politicker7bef9220-cloudformation-template.json",
+        "Parameters": {
+          "reactAppCiceroApiKey": "15c50538dd613eca2b3b32c3f55b4641652dfdb1",
+          "reactAppFirebaseAppId": "1:1015982715206:web:15b0e0319dab0e1cfc7547",
+          "reactAppFirebaseMessagingSenderId": "1015982715206",
+          "reactAppFirebaseStorageBucket": "politickerapp-286cf.firebasestorage.app",
+          "reactAppFirebaseProjectId": "politickerapp-286cf",
+          "reactAppFirebaseAuthDomain": "politickerapp-286cf.firebaseapp.com",
+          "reactAppFirebaseApiKey": "AIzaSyDy80QoWKdhCc_-Cdbses-eRTaxnGQxP1s",
+          "reactAppCongressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
+          "reactAppGeocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
+          "reactAppGoogleApiKey": "AIzaSyBaqYKnruWfZGlUbkcIqPgTECIvdJxInTY",
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/politicker7bef9220-52684b2f4e3672656c52-build.zip",
+          "apipolitickerGraphQLAPIIdOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIIdOutput"
+            ]
+          },
+          "apipolitickerGraphQLAPIEndpointOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIEndpointOutput"
+            ]
+          },
+          "apipolitickerGraphQLAPIKeyOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIKeyOutput"
+            ]
+          },
+          "functionapiProxyName": {
+            "Fn::GetAtt": [
+              "functionapiProxy",
+              "Outputs.Name"
+            ]
+          },
+          "hostingS3AndCloudFrontHostingBucketName": {
+            "Fn::GetAtt": [
+              "hostingS3AndCloudFront",
+              "Outputs.HostingBucketName"
+            ]
+          },
+          "env": "awsapp"
+        }
+      }
+    },
+    "hostingS3AndCloudFront": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/hosting/template.json",
+        "Parameters": {
+          "bucketName": "politicker-20251207011318-hostingbucket",
+          "env": "awsapp"
         }
       }
     }
