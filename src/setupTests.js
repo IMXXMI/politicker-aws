@@ -1,0 +1,1 @@
+import 'text-encoding'; // Polyfill TextEncoder for Firebase/Jest

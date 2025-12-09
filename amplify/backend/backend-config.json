@@ -7,7 +7,9 @@
           "additionalAuthenticationProviders": [],
           "defaultAuthentication": {
             "apiKeyConfig": {
-              "apiKeyExpirationDays": 7
+              "apiKeyExpirationDate": "2026-03-18T07:09:47.433Z",
+              "apiKeyExpirationDays": 100,
+              "description": ""
             },
             "authenticationType": "API_KEY"
           }
@@ -17,10 +19,70 @@
       "service": "AppSync"
     }
   },
+  "function": {
+    "apiProxy": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "politicker"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
   "hosting": {
     "S3AndCloudFront": {
       "providerPlugin": "awscloudformation",
       "service": "S3AndCloudFront"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_apiProxy_congressApiKey": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_apiProxy_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_apiProxy_geocodioApiKey": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_apiProxy_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_apiProxy_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "apiProxy"
+        }
+      ]
     }
   }
 }

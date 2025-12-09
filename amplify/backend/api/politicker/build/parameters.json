@@ -2,6 +2,7 @@
     "AppSyncApiName": "politicker",
     "DynamoDBBillingMode": "PAY_PER_REQUEST",
     "DynamoDBEnableServerSideEncryption": false,
+    "AuthModeLastUpdated": "2025-12-08T07:09:50.186Z",
     "S3DeploymentBucket": "amplify-politicker-dev-30414-deployment",
-    "S3DeploymentRootKey": "amplify-appsync-files/32ffed525585adbd99ee4b5dfd9bbe92b2192d14"
+    "S3DeploymentRootKey": "amplify-appsync-files/ce60e42c878b5595c5a3e53a3cef4603a4e4e099"
 }

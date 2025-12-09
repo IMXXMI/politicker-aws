@@ -208,7 +208,7 @@
           "DynamoDBBillingMode": "PAY_PER_REQUEST",
           "DynamoDBEnableServerSideEncryption": false,
           "S3DeploymentBucket": "amplify-politicker-dev-30414-deployment",
-          "S3DeploymentRootKey": "amplify-appsync-files/32ffed525585adbd99ee4b5dfd9bbe92b2192d14",
+          "S3DeploymentRootKey": "amplify-appsync-files/ce60e42c878b5595c5a3e53a3cef4603a4e4e099",
           "env": "dev"
         }
       }
@@ -219,6 +219,38 @@
         "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-dev-30414-deployment/amplify-cfn-templates/hosting/template.json",
         "Parameters": {
           "bucketName": "politicker-20251207011318-hostingbucket",
+          "env": "dev"
+        }
+      }
+    },
+    "functionapiProxy": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-dev-30414-deployment/amplify-cfn-templates/function/apiProxy-cloudformation-template.json",
+        "Parameters": {
+          "geocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
+          "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
+          "secretsPathAmplifyAppId": "duly49kc98uca",
+          "deploymentBucketName": "amplify-politicker-dev-30414-deployment",
+          "s3Key": "amplify-builds/apiProxy-2b456b4c4d4178677161-build.zip",
+          "apipolitickerGraphQLAPIIdOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIIdOutput"
+            ]
+          },
+          "apipolitickerGraphQLAPIEndpointOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIEndpointOutput"
+            ]
+          },
+          "apipolitickerGraphQLAPIKeyOutput": {
+            "Fn::GetAtt": [
+              "apipoliticker",
+              "Outputs.GraphQLAPIKeyOutput"
+            ]
+          },
           "env": "dev"
         }
       }

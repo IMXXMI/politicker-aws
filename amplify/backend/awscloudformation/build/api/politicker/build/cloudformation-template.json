@@ -111,7 +111,7 @@
             "ApiId"
           ]
         },
-        "Expires": 1765689178
+        "Expires": 1773876412
       }
     },
     "GraphQLAPINONEDS95A13CF0": {
@@ -312,6 +312,5 @@
         }
       }
     }
-  },
-  "Description": "{\"createdOn\":\"Windows\",\"createdBy\":\"Amplify\",\"createdWith\":\"14.2.3\",\"stackType\":\"api-AppSync\",\"metadata\":{\"whyContinueWithGen1\":\"I find the Gen 1 CLI easier to use\"}}"
+  }
 }

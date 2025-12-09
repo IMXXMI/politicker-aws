@@ -17,6 +17,15 @@
       },
       "hosting": {
         "S3AndCloudFront": {}
+      },
+      "function": {
+        "apiProxy": {
+          "geocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
+          "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
+          "secretsPathAmplifyAppId": "duly49kc98uca",
+          "deploymentBucketName": "amplify-politicker-dev-30414-deployment",
+          "s3Key": "amplify-builds/apiProxy-2b456b4c4d4178677161-build.zip"
+        }
       }
     }
   }

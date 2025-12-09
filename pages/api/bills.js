@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
   try {
-    const apiKey = 'z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t';
+    const apiKey = process.env.REACT_APP_CONGRESS_API_KEY || 'z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t';
     const congress = 118;
     const listRes = await fetch(`https://api.congress.gov/v3/bill?api_key=${apiKey}&limit=1&congress=${congress}&format=json`);
     if (!listRes.ok) throw new Error('List API fail');

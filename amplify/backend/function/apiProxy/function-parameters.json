@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "api": {
+      "politicker": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "geocodioApiKey",
+      "environmentVariableName": "GEOCODIO_API_KEY"
+    },
+    {
+      "cloudFormationParameterName": "congressApiKey",
+      "environmentVariableName": "CONGRESS_API_KEY"
+    }
+  ],
+  "secretNames": [
+    "twitter_bearer"
+  ]
+}

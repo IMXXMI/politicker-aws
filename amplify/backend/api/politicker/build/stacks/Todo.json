@@ -467,7 +467,7 @@
               {
                 "Ref": "TodoTable"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -562,7 +562,7 @@
               {
                 "Ref": "TodoTable"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -693,7 +693,7 @@
               {
                 "Ref": "TodoTable"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -824,7 +824,7 @@
               {
                 "Ref": "TodoTable"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -919,7 +919,7 @@
               {
                 "Ref": "TodoTable"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -1004,7 +1004,7 @@
               {
                 "Ref": "referencetotransformerrootstackGraphQLAPI20497F53ApiId"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -1044,7 +1044,7 @@
               {
                 "Ref": "referencetotransformerrootstackGraphQLAPI20497F53ApiId"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
@@ -1084,7 +1084,7 @@
               {
                 "Ref": "referencetotransformerrootstackGraphQLAPI20497F53ApiId"
               },
-              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\"]))\n$util.toJson({})"
+              "\"))\n$util.qr($ctx.stash.put(\"connectionAttributes\", {}))\n\n$util.qr($ctx.stash.put(\"adminRoles\", [\"us-east-2_EtOcNPFKu_Full-access/CognitoIdentityCredentials\",\"us-east-2_EtOcNPFKu_Manage-only/CognitoIdentityCredentials\",\"apiProxy-dev\"]))\n$util.toJson({})"
             ]
           ]
         },
