@@ -20,6 +20,12 @@
     }
   },
   "function": {
+    "CiceroProxy": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "apiProxy": {
       "build": true,
       "dependsOn": [
@@ -35,36 +41,6 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
-    },
-    "politicker7bef9220": {
-      "build": true,
-      "dependsOn": [
-        {
-          "attributes": [
-            "GraphQLAPIIdOutput",
-            "GraphQLAPIEndpointOutput",
-            "GraphQLAPIKeyOutput"
-          ],
-          "category": "api",
-          "resourceName": "politicker"
-        },
-        {
-          "attributes": [
-            "Name"
-          ],
-          "category": "function",
-          "resourceName": "apiProxy"
-        },
-        {
-          "attributes": [
-            "HostingBucketName"
-          ],
-          "category": "hosting",
-          "resourceName": "S3AndCloudFront"
-        }
-      ],
-      "providerPlugin": "awscloudformation",
-      "service": "Lambda"
     }
   },
   "hosting": {
@@ -74,6 +50,30 @@
     }
   },
   "parameters": {
+    "AMPLIFY_function_CiceroProxy_ciceroApiKey": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "CiceroProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_CiceroProxy_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "CiceroProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_CiceroProxy_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "CiceroProxy"
+        }
+      ]
+    },
     "AMPLIFY_function_apiProxy_congressApiKey": {
       "usedBy": [
         {
@@ -111,102 +111,6 @@
         {
           "category": "function",
           "resourceName": "apiProxy"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppCiceroApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppCongressApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseAppId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseAuthDomain": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseMessagingSenderId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseProjectId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppFirebaseStorageBucket": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppGeocodioApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_reactAppGoogleApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
-        }
-      ]
-    },
-    "AMPLIFY_function_politicker7bef9220_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "politicker7bef9220"
         }
       ]
     }

@@ -13,17 +13,15 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "aws-amplify": "^6.15.8",
+    "cors": "^2.8.5",
     "firebase": "^10.12.2",
+    "node-fetch": "^2.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },
-  "jest": {
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/setupTests.js"
-    ]
-  },
+  "jest": {},
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -51,7 +49,9 @@
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "stream": "^0.0.3",
     "text-encoding": "^0.7.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "util": "^0.12.5"
   }
 }

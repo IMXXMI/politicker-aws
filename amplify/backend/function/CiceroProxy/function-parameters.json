@@ -1,0 +1,9 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "ciceroApiKey",
+      "environmentVariableName": "CICERO_API_KEY"
+    }
+  ]
+}

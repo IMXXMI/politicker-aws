@@ -52,19 +52,10 @@
           "s3Key": "amplify-builds/apiProxy-38646d484351764e7850-build.zip"
         },
         "politicker": {},
-        "politicker7bef9220": {
-          "reactAppCiceroApiKey": "15c50538dd613eca2b3b32c3f55b4641652dfdb1",
-          "reactAppFirebaseAppId": "1:1015982715206:web:15b0e0319dab0e1cfc7547",
-          "reactAppFirebaseMessagingSenderId": "1015982715206",
-          "reactAppFirebaseStorageBucket": "politickerapp-286cf.firebasestorage.app",
-          "reactAppFirebaseProjectId": "politickerapp-286cf",
-          "reactAppFirebaseAuthDomain": "politickerapp-286cf.firebaseapp.com",
-          "reactAppFirebaseApiKey": "AIzaSyDy80QoWKdhCc_-Cdbses-eRTaxnGQxP1s",
-          "reactAppCongressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
-          "reactAppGeocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
-          "reactAppGoogleApiKey": "AIzaSyBaqYKnruWfZGlUbkcIqPgTECIvdJxInTY",
+        "CiceroProxy": {
+          "ciceroApiKey": "15c50538dd613eca2b3b32c3f55b4641652dfdb1",
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/politicker7bef9220-52684b2f4e3672656c52-build.zip"
+          "s3Key": "amplify-builds/CiceroProxy-6b385a74546d5a6d3646-build.zip"
         }
       },
       "api": {
