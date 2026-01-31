@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    
     "@aws-amplify/backend": "^1.19.0",
     "@aws-amplify/ui-react": "^6.13.1",
     "@testing-library/jest-dom": "^5.17.0",
@@ -19,7 +20,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "^5.0.1",
-    "web-vitals": "^2.1.4"
+     "web-vitals": "^2.1.4"
   },
   "jest": {},
 "scripts": {
@@ -46,6 +47,11 @@
     ]
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+  "@typescript-eslint/parser": "^6.19.0",
+  "eslint": "^8.57.0",
+  "eslint-plugin-react": "^7.33.2",
+  "eslint-plugin-react-hooks": "^4.6.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "stream": "^0.0.3",

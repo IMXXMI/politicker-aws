@@ -3,10 +3,62 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, TwitterAuthProvider, onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from 'firebase/firestore';
 import './App.css';
+import { Timestamp } from 'firebase/firestore';  // Add this import at the top with other Firebase imports
 
+// AdminModal component
+const AdminModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Admin Panel</h2>
+        <p>Admin controls go here</p>
+      </div>
+    </div>
+  );
+};
 
+// AuthForm component
+const AuthForm: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignup, setIsSignup] = useState(true);
 
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>{isSignup ? 'Sign Up' : 'Sign In'}</h2>
+        <input 
+          type="email" 
+          placeholder="Email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)} 
+        />
+        <input 
+          type="password" 
+          placeholder="Password" 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
+        />
+        <button onClick={() => setIsSignup(!isSignup)}>
+          {isSignup ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
+type Poll = {
+  id?: string;
+  question: string;
+  scope: 'district' | 'state' | 'nationwide';
+  tier: 'local' | 'out' | 'in';
+  options: string[];
+  creatorId: string;
+  createdAt: Timestamp;  // ← Use Timestamp instead of any
+  isActive: boolean;
+};
 
   
   // All types top-level (outside App)
@@ -30,16 +82,6 @@ type Bill = {
   earmarks?: string[];
 };
 
-type Poll = {
-  id?: string; // optional because we add it manually
-  question: string;
-  scope: 'district' | 'state' | 'nationwide';
-  tier: 'local' | 'out' | 'in';
-  options: string[];
-  creatorId: string;
-  createdAt: any; // or import Timestamp from firebase/firestore
-  isActive: boolean;
-};
 
 type RepDetails = { bio: string; votes: string[]; bills: string[]; comments: string[] };
 
@@ -52,6 +94,13 @@ type TieredPollResult = {
   function App() {  // Line 9 — opening brace
   // Your state/useEffect here
   // Auth listener
+   // Poll states
+  
+  const [pollResults, setPollResults] = useState<PollResult>({ yea: 0, nay: 0 });
+  const [earmarkPolls, setEarmarkPolls] = useState<{ [earmark: string]: TieredPollResult }>({});
+  const [commentPolls, setCommentPolls] = useState<{ [comment: string]: TieredPollResult }>({});
+  const [repPolls, setRepPolls] = useState<{ [repName: string]: { [tier: string]: { approve: number; disapprove: number } } }>({});
+  const [registeredVotersEstimate, setRegisteredVotersEstimate] = useState(0);
   const [reps, setReps] = useState<Rep[]>([]);
   const [county, setCounty] = useState('');
   const [zip, setZip] = useState('');
@@ -155,6 +204,13 @@ const fetchReps = async (zipCode: string) => {
     // TODO: Implement fetchReps logic
 };
 
+const fetchRepDetails = (rep: Rep) => {
+    setSelectedRep(rep);
+    setShowRepModal(true);
+    // TODO: Fetch detailed bio, votes, bills, comments from API or Firestore
+    setRepDetails({ bio: '', votes: [], bills: [], comments: [] });
+};
+
 useEffect(() => {
   const saved = localStorage.getItem('customPollVotes');
   if (saved) {
@@ -212,13 +268,7 @@ useEffect(() => {
   return () => unsubscribe();
 }, [user]);
 
-  // Poll states
-  
-  const [pollResults, setPollResults] = useState<PollResult>({ yea: 0, nay: 0 });
-  const [earmarkPolls, setEarmarkPolls] = useState<{ [earmark: string]: TieredPollResult }>({});
-  const [commentPolls, setCommentPolls] = useState<{ [comment: string]: TieredPollResult }>({});
-  const [repPolls, setRepPolls] = useState<{ [repName: string]: { [tier: string]: { approve: number; disapprove: number } } }>({});
-  const [registeredVotersEstimate, setRegisteredVotersEstimate] = useState(0);
+ 
 
 // Fetch active polls (nationwide > state > district, first match)
 useEffect(() => {
@@ -580,10 +630,196 @@ const getElectionId = async () => {
   }
 };
 
-  return (
-    <div className="App">
-      {/* Your JSX here */}
+ return (
+  <div className="App">
+    {/* Header */}
+    <header className="header">
+      <div className="header-main">
+        <h1>{appName}</h1>
+        <p>Your reps. Real-time. Your voice.</p>
+      </div>
+      <div className="header-buttons">
+        {user ? (
+          <p>Signed in as: {user.email}</p>
+        ) : (
+          <button onClick={() => setShowAuth(true)}>Sign In / Sign Up</button>
+        )}
+        <button onClick={() => setShowAdmin(true)}>Admin</button>
+      </div>
+    </header>
+
+    {/* Current Poll at Top */}
+    {pollLoading ? (
+      <p className="loading">Loading poll...</p>
+    ) : currentPoll ? (
+      <div className="poll-card">
+        <h3>{currentPoll.question}</h3>
+        <form>
+          {currentPoll.options.map((option: string, index: number) => {
+            const isVoted = !!customPollVotes[currentPoll.id || ''];
+            const isSelected = customPollVotes[currentPoll.id || ''] === option;
+            return (
+              <label key={index} className="poll-option">
+                <input
+                  type="radio"
+                  name="pollVote"
+                  value={option}
+                  checked={isSelected}
+                  disabled={isVoted}
+                  onChange={() => handlePollVote(option)}
+                />
+                {option}
+                {isVoted && isSelected && ' (Your vote)'}
+              </label>
+            );
+          })}
+        </form>
+        {customPollVotes[currentPoll.id || ''] && (
+          <p style={{color: 'green', fontWeight: 'bold'}}>
+            You already voted: {customPollVotes[currentPoll.id || '']}
+          </p>
+        )}
+      </div>
+    ) : (
+      <p>No active poll</p>
+    )}
+
+    {/* Voter Verification */}
+    <div className="voter-verify">
+      <h3>Verify Voter</h3>
+      <p>Enter your address (privacy protected — no name needed).</p>
+      <div className="address-grid">
+        <input type="text" placeholder="Street Address" value={street} onChange={(e) => setStreet(e.target.value)} />
+        <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
+        <input type="text" placeholder="State (e.g., VA)" value={stateCode} onChange={(e) => setStateCode(e.target.value.toUpperCase())} maxLength={2} />
+        <input type="text" placeholder="ZIP Code" value={zip} onChange={(e) => setZip(e.target.value)} maxLength={5} />
+      </div>
+      <button onClick={() => verifyVoter(`${street}, ${city}, ${stateCode} ${zip}`)}>
+        Verify Registration
+      </button>
+      {voterVerified && <p className="verified">Verified! Higher poll priority unlocked.</p>}
+      {userState && stateVoterLookup[userState] && (
+        <p className="state-link">
+          Official check: <a href={stateVoterLookup[userState]} target="_blank" rel="noopener noreferrer">Open {userState} Voter Portal</a>
+        </p>
+      )}
     </div>
+
+    <main>
+      <button onClick={() => fetchReps(zip)} disabled={loading || !zip}>
+        {loading ? 'Loading Reps...' : 'Show My Reps'}
+      </button>
+
+      <div className="main-tabs">
+        <button className={activeTab === 'federal' ? 'active' : ''} onClick={() => setActiveTab('federal')}>
+          Federal Government
+        </button>
+        <button className={activeTab === 'state' ? 'active' : ''} onClick={() => setActiveTab('state')}>
+          State Government
+        </button>
+        <button className={activeTab === 'international' ? 'active' : ''} onClick={() => setActiveTab('international')}>
+          International Representatives
+        </button>
+        <button className={activeTab === 'spending' ? 'active' : ''} onClick={() => setActiveTab('spending')}>
+          Government Spending
+        </button>
+        <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>
+          All
+        </button>
+      </div>
+
+      {reps.length > 0 && (activeTab === 'federal' || activeTab === 'state' || activeTab === 'all') && (
+        <div className="reps-section">
+          <p className="county-banner">Your County: {county}</p>
+
+          <div className="reps-grid">
+            {reps
+              .filter((rep) => {
+                if (activeTab === 'federal') {
+                  return rep.level.includes('federal') || rep.level === 'President' || rep.level === 'Vice President' || rep.level === 'Supreme Court' || rep.level === 'Cabinet';
+                }
+                if (activeTab === 'state') {
+                  return rep.level.includes('state');
+                }
+                return true;
+              })
+              .map((rep, i) => (
+                <div key={i} className="rep-card" onClick={() => fetchRepDetails(rep)}>
+                  <img src={rep.photo} alt={rep.name} />
+                  <h4>{rep.name}</h4>
+                  <p>{rep.party} | {rep.level}</p>
+                  <p>Accountability: {rep.score}%</p>
+                  <div className="rep-poll-bar">
+                    <div style={{ width: `${rep.score}%`, backgroundColor: '#4CAF50', height: '8px' }}></div>
+                  </div>
+                  <a href={rep.contact}>Contact</a>
+                  {rep.phone && <a href={`tel:${rep.phone}`}>📞 Call</a>}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'international' && (
+        <div className="international-section">
+          <h2>International Representatives</h2>
+          <p>U.S. Ambassadors and key diplomatic posts</p>
+          <div className="reps-grid">
+            {[
+              { name: 'Linda Thomas-Greenfield', title: 'U.N. Ambassador', country: 'United Nations', photo: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Linda_Thomas-Greenfield_official_photo.jpg' },
+              { name: 'Rahm Emanuel', title: 'Ambassador to Japan', country: 'Japan', photo: 'https://jp.usembassy.gov/wp-content/uploads/sites/131/2022/01/Rahm-Emanuel-Official-Portrait-1024x683.jpg' },
+            ].map((amb, i) => (
+              <div key={i} className="rep-card">
+                <img src={amb.photo} alt={amb.name} />
+                <h4>{amb.name}</h4>
+                <p>{amb.title}</p>
+                <p>{amb.country}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'spending' && (
+        <div className="spending-section">
+          <h2>Government Spending Tracker</h2>
+          <p>Live view of proposed federal spending bills and earmarks</p>
+          <div className="spending-list">
+            <div className="spending-item">
+              <h3>H.R. 1234 - Infrastructure Investment Act</h3>
+              <p>Proposed: $1.2 trillion</p>
+              <p>Status: Passed House</p>
+              <p>Earmarks: 142 projects ($45B)</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {showRepModal && selectedRep && (
+        <div className="modal">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowRepModal(false)}>×</button>
+            <h2>{selectedRep.name}</h2>
+            <p>{selectedRep.party} | {selectedRep.level}</p>
+            <p>Score: {selectedRep.score}%</p>
+            <a href={selectedRep.contact}>Contact</a>
+            {selectedRep.phone && <a href={`tel:${selectedRep.phone}`}>Call</a>}
+          </div>
+        </div>
+      )}
+      {showRepPollBreakdown && selectedRepPoll && (
+        <div className="modal">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowRepPollBreakdown(false)}>×</button>
+            <h2>Poll Breakdown: {selectedRepPoll}</h2>
+          </div>
+        </div>
+      )}
+      {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
+      <AuthForm />
+    </main>
+  </div>
   );
 }
 
