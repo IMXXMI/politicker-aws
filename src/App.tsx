@@ -199,9 +199,60 @@ const updateRepScore = (repName: string, approveVotes: number, totalVotes: numbe
   };
 
 const fetchReps = async (zipCode: string) => {
-    console.log('fetchReps called with ZIP:', zipCode);
-    setLoading(true);
-    // TODO: Implement fetchReps logic
+  console.log('fetchReps called with ZIP:', zipCode);
+  setLoading(true);
+
+  // Mock reps for now (shows President/VP + some federal reps)
+  const mockReps: Rep[] = [
+    {
+      name: 'Donald Trump',
+      party: 'Republican',
+      photo: 'https://theunitedstates.io/images/congress/450x550/T000000.jpg',
+      level: 'President',
+      contact: 'https://www.whitehouse.gov/contact/',
+      phone: '(202) 456-1111',
+      score: 75,
+      id: 'president',
+      xHandle: '@realDonaldTrump'
+    },
+    {
+      name: 'JD Vance',
+      party: 'Republican',
+      photo: 'https://theunitedstates.io/images/congress/450x550/V000137.jpg',
+      level: 'Vice President',
+      contact: 'https://www.whitehouse.gov/contact/',
+      phone: '(202) 456-1111',
+      score: 72,
+      id: 'vice-president',
+      xHandle: '@JDVance'
+    },
+    {
+      name: 'John G. Roberts, Jr.',
+      party: 'Chief Justice',
+      photo: 'https://www.supremecourt.gov/about/biographies/current/Roberts.jpg',
+      level: 'Supreme Court',
+      contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+      phone: '(202) 479-3000',
+      score: 85,
+      id: 'scotus-roberts',
+      xHandle: ''
+    },
+    {
+      name: 'Abigail Spanberger',
+      party: 'Dem',
+      photo: 'https://placehold.co/100x100?text=Spanberger',
+      level: 'federal house',
+      contact: 'https://spanberger.house.gov',
+      phone: '(202) 225-5176',
+      score: 80,
+      id: '412478',
+      xHandle: '@RepABSpanberger'
+    }
+  ];
+
+  setReps(mockReps);
+  setCounty('Chesterfield County'); // fallback until Geocodio is back
+  setLoading(false);
 };
 
 const fetchRepDetails = (rep: Rep) => {
@@ -817,7 +868,7 @@ const getElectionId = async () => {
         </div>
       )}
       {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
-      <AuthForm />
+      {showAuth && <AuthForm onClose={() => setShowAuth(false)} />}
     </main>
   </div>
   );
