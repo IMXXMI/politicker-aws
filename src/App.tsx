@@ -867,6 +867,31 @@ function App() {
         </div>
       </header>
 
+
+{/* About / Demo Banner - Mobile-First Version */}
+{/* About / Demo Banner - Clear & Honest Version */}
+<div style={{
+  backgroundColor: '#f8f9fa',
+  padding: '20px 20px',
+  margin: '15px 0',
+  borderRadius: '8px',
+  borderLeft: '5px solid #4CAF50',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  color: '#222'
+}}>
+  <strong>Politicker</strong> — Building Transparency in Government<br/><br/>
+  
+  We are developing a mobile-first app that will make it easy for anyone to see what their elected representatives are doing — anytime, anywhere.<br/><br/>
+  
+  <strong>This web prototype is only a visual example.</strong><br/>
+  It uses mock data to demonstrate how the final app will work. You can enter a ZIP code to see sample representatives and click on them to view a mock profile with bio, bills, and other sections.<br/><br/>
+  
+  The real app will pull live, accurate data — but building and maintaining reliable data connections is expensive.<br/><br/>
+  
+  <strong>Your support on Indiegogo</strong> will help us fund the necessary APIs, data sources, and development to turn this vision into a fully functional mobile app for everyone.<br/><br/>
+  <em>Together, we can create a powerful tool that brings real transparency and accountability to our democracy.</em>
+</div>
       {/* Current Poll at Top */}
       {pollLoading ? (
         <p className="loading">Loading poll...</p>
