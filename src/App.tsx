@@ -1056,16 +1056,6 @@ function App() {
           />
         )}
 
-        {showRepPollBreakdown && selectedRepPoll && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <button className="modal-close" onClick={() => setShowRepPollBreakdown(false)}>×</button>
-              <h2>Approval/Disapproval Poll for {selectedRepPoll}</h2>
-              <p>Detailed tier breakdown coming soon (In-District, Out-of-District, Local)</p>
-              <button onClick={() => setShowRepPollBreakdown(false)}>Close</button>
-            </div>
-          </div>
-        )}
 
         {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
         {showAuth && <AuthForm onClose={() => setShowAuth(false)} />}
