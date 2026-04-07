@@ -851,21 +851,41 @@ function App() {
   // ====================== RETURN ======================
   return (
     <div className="App">
-      {/* Header */}
-      <header className="header">
-        <div className="header-main">
-          <h1>{appName}</h1>
-          <p>Your reps. Real-time. Your voice.</p>
-        </div>
-        <div className="header-buttons">
-          {user ? (
-            <p>Signed in as: {user.email}</p>
-          ) : (
-            <button onClick={() => setShowAuth(true)}>Sign In / Sign Up</button>
-          )}
-          <button onClick={() => setShowAdmin(true)}>Admin</button>
-        </div>
-      </header>
+  {/* Header */}
+<header className="header">
+  <div className="header-main">
+    <h1>{appName}</h1>
+    <p>Your reps. Real-time. Your voice.</p>
+  </div>
+
+  <div className="header-buttons">
+    {user ? (
+      <p>Signed in as: {user.email}</p>
+    ) : (
+      <button onClick={() => setShowAuth(true)}>Sign In / Sign Up</button>
+    )}
+
+    {/* Green Donate Button - Replaces the old Admin button */}
+    <a
+      href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        padding: '12px 20px',
+        borderRadius: '8px',
+        textDecoration: 'none',
+        fontWeight: '700',
+        fontSize: '15px',
+        marginLeft: '10px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+      }}
+    >
+      Donate Now
+    </a>
+  </div>
+</header>
 
 
 {/* About / Demo Banner - Mobile-First Version */}
@@ -887,9 +907,9 @@ function App() {
   <strong>This web prototype is only a visual example.</strong><br/>
   It uses mock data to demonstrate how the final app will work. You can enter a ZIP code to see sample representatives and click on them to view a mock profile with bio, bills, and other sections.<br/><br/>
   
-  The real app will pull live, accurate data — but building and maintaining reliable data connections is expensive.<br/><br/>
+  The real app will pull live, accurate data, but building and maintaining reliable data connections can be costly<br/><br/>
   
-  <strong>Your support on Indiegogo</strong> will help us fund the necessary APIs, data sources, and development to turn this vision into a fully functional mobile app for everyone.<br/><br/>
+  <strong>Your support </strong> will help us fund the necessary APIs, data sources, and development to turn this vision into a fully functional mobile app for everyone.<br/><br/>
   <em>Together, we can create a powerful tool that brings real transparency and accountability to our democracy.</em>
 </div>
       {/* Current Poll at Top */}
