@@ -1101,7 +1101,7 @@ function App() {
   // ====================== RETURN ======================
   return (
     <div className="App">
-                  {/* Updated Header with Follow Us Links */}
+                          {/* Updated Header with The Dream Corporation Fiscal Sponsor */}
       <header className="header">
         <div className="header-main">
           <h1>Politicker</h1>
@@ -1133,7 +1133,7 @@ function App() {
             Admin
           </span>
 
-          {/* Follow Us Links - TikTok now clearly labeled */}
+          {/* Follow Us Links */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '14px' }}>
             <span style={{ color: '#555', whiteSpace: 'nowrap' }}>Follow us:</span>
             
@@ -1156,21 +1156,40 @@ function App() {
             </a>
           </div>
 
-          <a
-            href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              padding: '12px 20px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: '700'
-            }}
-          >
-            Donate Now
-          </a>
+          {/* Donate Button + Non-Profit Label with Fiscal Sponsor Link */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+            <a
+              href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontWeight: '700'
+              }}
+            >
+              Donate Now
+            </a>
+            <span style={{ 
+              fontSize: '13px', 
+              color: 'white', 
+              fontWeight: '600',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+              501(c)(3) Non-Profit • 
+              <a 
+                href="https://thedreamcorporation.org" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: 'white', textDecoration: 'underline' }}
+              >
+                The Dream Corporation
+              </a>
+            </span>
+          </div>
         </div>
       </header>
 
