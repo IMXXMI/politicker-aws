@@ -41,15 +41,14 @@ type GeocodioLegislator = {
 type Poll = {
   id?: string;
   question: string;
-  scope: 'nationwide' | 'state' | 'county';   // ← Updated to match AdminModal
+  scope: 'nationwide' | 'state' | 'county';
   options: string[];
   creatorId: string;
   createdAt: Timestamp;
   isActive: boolean;
-  state?: string;     // e.g. "VA"
-  county?: string;    // e.g. "Chesterfield County"
+  state?: string;
+  county?: string;
 };
-
 type Rep = {
   name: string;
   party: string;
@@ -460,7 +459,11 @@ const AuthForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
-const RepPollBar: React.FC<{ rep: Rep; repPolls: any }> = ({ rep, repPolls }) => {
+const RepPollBar: React.FC<{ 
+  rep: Rep; 
+  repPolls: any; 
+  onBreakdown: () => void;
+}> = ({ rep, repPolls, onBreakdown }) => {
   const repResults = repPolls[rep.name] || {};
   const totalApprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.approve || 0), 0);
   const totalDisapprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.disapprove || 0), 0);
@@ -468,7 +471,10 @@ const RepPollBar: React.FC<{ rep: Rep; repPolls: any }> = ({ rep, repPolls }) =>
   const approvePercent = total > 0 ? Math.round((totalApprove / total) * 100) : 50;
 
   return (
-    <div style={{ margin: '10px 0', fontSize: '14px' }}>
+    <div 
+      style={{ margin: '10px 0', fontSize: '14px', cursor: 'pointer' }}
+      onClick={onBreakdown}
+    >
       <div style={{ display: 'flex', height: '20px', background: '#ddd', borderRadius: '10px', overflow: 'hidden' }}>
         <div style={{ width: `${approvePercent}%`, background: '#4CAF50' }} />
         <div style={{ width: `${100 - approvePercent}%`, background: '#f44336' }} />
@@ -477,107 +483,181 @@ const RepPollBar: React.FC<{ rep: Rep; repPolls: any }> = ({ rep, repPolls }) =>
         <span>Approve: {totalApprove}</span>
         <span>Disapprove: {totalDisapprove}</span>
       </div>
+      <small style={{ color: '#2196F3' }}>Click for detailed tier breakdown</small>
     </div>
   );
 };
 
-// UPDATED RepModal — now accepts handleVote as a prop
+const PollBreakdownModal: React.FC<{
+  pollOrRep: Poll | Rep | null;   // ← Changed
+  repPolls: any;
+  onClose: () => void;
+}> = ({ pollOrRep, repPolls, onClose }) => {
+  if (!pollOrRep) return null;
+
+  const title = 'question' in pollOrRep ? pollOrRep.question : pollOrRep.name;
+
+  // For rep polls we use repPolls, for main polls we can expand later
+  const pollResults = repPolls[title] || {}; 
+
+  const tiers = ['verified', 'local', 'in-state', 'out-of-state'];
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal" style={{ maxWidth: '520px' }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        
+        <h2>Poll Breakdown</h2>
+        <h4 style={{ marginBottom: '20px' }}>{title}</h4>
+
+        <div style={{ marginBottom: '20px' }}>
+          {tiers.map(tier => {
+            const data = pollResults[tier] || { approve: 0, disapprove: 0 };
+            const total = data.approve + data.disapprove;
+            const approvePercent = total > 0 ? Math.round((data.approve / total) * 100) : 0;
+
+            return (
+              <div key={tier} style={{ marginBottom: '18px', padding: '12px', background: '#f9f9f9', borderRadius: '8px' }}>
+                <strong style={{ textTransform: 'capitalize' }}>{tier.replace('-', ' ')}</strong>
+                <div style={{ display: 'flex', height: '18px', background: '#e0e0e0', borderRadius: '9px', margin: '8px 0', overflow: 'hidden' }}>
+                  <div style={{ width: `${approvePercent}%`, background: '#4CAF50' }} />
+                  <div style={{ width: `${100 - approvePercent}%`, background: '#f44336' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span>Approve: {data.approve}</span>
+                  <span>Disapprove: {data.disapprove}</span>
+                  <span>Total: {total}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button onClick={onClose} style={{ width: '100%', padding: '12px' }}>
+          Close Breakdown
+        </button>
+      </div>
+    </div>
+  );
+};
+// ====================== REP MODAL (with Real Voting History) ======================
 const RepModal: React.FC<{
   selectedRep: Rep | null;
   repDetails: RepDetails;
   repPolls: any;
   onClose: () => void;
-  handleVote: (choice: 'yea' | 'nay' | 'approve' | 'disapprove', tier?: string | null, earmark?: string | null, comment?: string | null, repName?: string | null) => void;
-}> = ({ selectedRep, repDetails, repPolls, onClose, handleVote }) => {
+  handleVote: (choice: string, tier?: string | null, earmark?: string | null, comment?: string | null, repName?: string | null, pollId?: string | null) => void;
+  setSelectedPoll: (pollOrRep: Poll | Rep | null) => void;
+  setShowPollBreakdown: (show: boolean) => void;
+}> = ({ selectedRep, repDetails, repPolls, onClose, handleVote, setSelectedPoll, setShowPollBreakdown }) => {
   if (!selectedRep) return null;
+
+  // Real-time approval score
+  const repResults = repPolls[selectedRep.name] || {};
+  const totalApprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.approve || 0), 0);
+  const totalDisapprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.disapprove || 0), 0);
+  const totalVotes = totalApprove + totalDisapprove;
+  const realScore = totalVotes > 0 ? Math.round((totalApprove / totalVotes) * 100) : selectedRep.score;
 
   return (
     <div className="modal-overlay">
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
         <button className="modal-close" onClick={onClose}>×</button>
         
-        <img 
-          src={selectedRep.photo || 'https://placehold.co/120x120?text=Rep'} 
-          alt={selectedRep.name} 
-          style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px' }} 
-        />
-        
-        <h2>{selectedRep.name}</h2>
-        <p><strong>Party:</strong> {selectedRep.party || 'N/A'} | <strong>Level:</strong> {selectedRep.level || 'N/A'}</p>
-        <p><strong>Accountability Score:</strong> {selectedRep.score || 50}%</p>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+          <img 
+            src={selectedRep.photo || 'https://placehold.co/120x120?text=Rep'} 
+            alt={selectedRep.name}
+            style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '12px' }}
+          />
+          <div style={{ flex: 1 }}>
+            <h2>{selectedRep.name}</h2>
+            <p style={{ margin: '4px 0' }}>
+              <strong>{selectedRep.party}</strong> • {selectedRep.level}
+            </p>
+            <p style={{ margin: '8px 0', fontSize: '18px', color: '#4CAF50' }}>
+              <strong>Approval Score:</strong> {realScore}%
+            </p>
+            {selectedRep.contact && selectedRep.contact !== '#' && (
+              <a href={selectedRep.contact} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                Contact Representative
+              </a>
+            )}
+            {selectedRep.phone && (
+              <a href={`tel:${selectedRep.phone}`} style={{ marginLeft: '15px', color: '#007bff' }}>
+                📞 Call
+              </a>
+            )}
+            {selectedRep.xHandle && selectedRep.xHandle !== '@Rep' && (
+              <p><strong>X:</strong> <a href={`https://x.com/${selectedRep.xHandle.replace('@', '')}`} target="_blank" rel="noopener noreferrer">{selectedRep.xHandle}</a></p>
+            )}
+          </div>
+        </div>
 
-        {selectedRep.contact && selectedRep.contact !== '#' && (
-          <p><strong>Contact:</strong> <a href={selectedRep.contact} target="_blank" rel="noopener noreferrer">Official Website</a></p>
-        )}
-        {selectedRep.phone && (
-          <p><strong>Phone:</strong> <a href={`tel:${selectedRep.phone}`}>{selectedRep.phone}</a></p>
-        )}
-        {selectedRep.xHandle && selectedRep.xHandle !== '@Rep' && (
-          <p><strong>X (Twitter):</strong> <a href={`https://x.com/${selectedRep.xHandle.replace('@', '')}`} target="_blank" rel="noopener noreferrer">{selectedRep.xHandle}</a></p>
-        )}
-
-        <RepPollBar rep={selectedRep} repPolls={repPolls} />
-
-        <div className="rep-section">
+        {/* Bio */}
+        <div style={{ marginTop: '25px' }}>
           <h3>Bio</h3>
-          <p>{repDetails.bio || 'No bio available yet.'}</p>
+          <p>{repDetails.bio || 'No biography available yet.'}</p>
         </div>
 
-        <div className="rep-section">
-          <h3>Voting History</h3>
-          <ul>
-            {repDetails.votes && repDetails.votes.length > 0 ? 
-              repDetails.votes.map((v, i) => <li key={i}>{v}</li>) : 
-              <li>No voting history available yet.</li>
-            }
-          </ul>
+        {/* Recent Voting History — THIS IS THE NEW SECTION */}
+        <div style={{ marginTop: '30px' }}>
+          <h3>Recent Voting History</h3>
+          {repDetails.votes && repDetails.votes.length > 0 ? (
+            <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px', padding: '10px' }}>
+              {repDetails.votes.map((vote: string, index: number) => (
+                <div 
+                  key={index}
+                  style={{
+                    padding: '12px 15px',
+                    marginBottom: '8px',
+                    background: '#f9f9f9',
+                    borderRadius: '6px',
+                    fontSize: '15px'
+                  }}
+                >
+                  {vote}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontStyle: 'italic', color: '#777' }}>No recent voting records loaded yet.</p>
+          )}
         </div>
 
-        <div className="rep-section">
-          <h3>Supported Bills</h3>
-          <ul>
-            {repDetails.bills && repDetails.bills.length > 0 ? 
-              repDetails.bills.map((b, i) => <li key={i}>{b}</li>) : 
-              <li>No bills available yet.</li>
-            }
-          </ul>
-        </div>
+        {/* Live Poll Bar */}
+        <RepPollBar 
+          rep={selectedRep} 
+          repPolls={repPolls} 
+          onBreakdown={() => {
+            setSelectedPoll(selectedRep);
+            setShowPollBreakdown(true);
+          }} 
+        />
 
-        <div className="rep-section">
-          <h3>Earmarks</h3>
-          <ul>
-            {repDetails.earmarks && repDetails.earmarks.length > 0 ? 
-              repDetails.earmarks.map((e, i) => <li key={i}>{e}</li>) : 
-              <li>No earmarks available yet.</li>
-            }
-          </ul>
-        </div>
-
-        <div className="rep-section">
-          <h3>Recent Public Comments</h3>
-          <ul>
-            {repDetails.comments && repDetails.comments.length > 0 ? 
-              repDetails.comments.map((c, i) => <li key={i}>{c}</li>) : 
-              <li>No recent comments available yet.</li>
-            }
-          </ul>
-        </div>
-
-        <div className="rep-voting" style={{ marginTop: '20px' }}>
+        {/* Cast Your Vote */}
+        <div className="rep-voting" style={{ marginTop: '25px' }}>
           <h3>Cast Your Vote on this Representative</h3>
           <button 
             onClick={() => handleVote('approve', null, null, null, selectedRep.name)}
-            style={{ backgroundColor: '#4CAF50', color: 'white', margin: '5px', padding: '10px 15px' }}
+            style={{ backgroundColor: '#4CAF50', color: 'white', margin: '5px', padding: '12px 20px', fontSize: '16px' }}
           >
             👍 Approve / Support
           </button>
           <button 
             onClick={() => handleVote('disapprove', null, null, null, selectedRep.name)}
-            style={{ backgroundColor: '#f44336', color: 'white', margin: '5px', padding: '10px 15px' }}
+            style={{ backgroundColor: '#f44336', color: 'white', margin: '5px', padding: '12px 20px', fontSize: '16px' }}
           >
             👎 Disapprove / Oppose
           </button>
         </div>
+
+        <button 
+          onClick={onClose}
+          style={{ marginTop: '30px', width: '100%', padding: '14px', fontSize: '17px' }}
+        >
+          Close
+        </button>
       </div>
     </div>
   );
@@ -587,7 +667,8 @@ const RepModal: React.FC<{
 // ====================== MAIN APP ======================
 function App() {
    // ====================== STATE ======================
-  const [user, setUser] = useState<User | null>(null);
+   const [pollVotes, setPollVotes] = useState<{ [pollId: string]: { [option: string]: number } }>({});
+   const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null);
   const [repDetails, setRepDetails] = useState<RepDetails>({ bio: '', votes: [], bills: [], comments: [] });
@@ -610,6 +691,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<'federal' | 'state' | 'international' | 'spending' | 'all' | 'local'>('federal');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPollBreakdown, setShowPollBreakdown] = useState(false);
+  const [selectedPoll, setSelectedPoll] = useState<Poll | Rep | null>(null);
     // Smart filtering for polls based on user location
   const filteredPolls = currentPolls.filter((poll: Poll) => {
     if (poll.scope === 'nationwide') return true;
@@ -669,46 +752,44 @@ function App() {
     }
   }, []);
 
-  // Real-time vote listener
+           // Real-time vote listener - FIXED for custom polls
   useEffect(() => {
-    if (!user) {
-      setPollResults({ yea: 0, nay: 0 });
-      setRepPolls({});
-      return;
-    }
-
     const votesRef = collection(db, 'votes');
     const unsubscribe = onSnapshot(votesRef, (snapshot) => {
-      const repTemp: any = {};
+      const newRepPolls: any = {};
+      const newPollVotes: { [pollId: string]: { [option: string]: number } } = {};
 
       snapshot.docs.forEach(doc => {
         const v = doc.data();
-        if (v.pollType === 'rep' && v.pollId) {
-          if (!repTemp[v.pollId]) repTemp[v.pollId] = {};
-          const tier = v.tier || 'local';
-          if (!repTemp[v.pollId][tier]) repTemp[v.pollId][tier] = { approve: 0, disapprove: 0 };
+        const pollId = v.pollId || 'main';
+        const choice = v.choice;   // ← This must be the exact option text
 
-          if (v.choice === 'approve' || v.choice === 'yea') {
-            repTemp[v.pollId][tier].approve += 1;
-          } else if (v.choice === 'disapprove' || v.choice === 'nay') {
-            repTemp[v.pollId][tier].disapprove += 1;
+        // Rep polls (approve / disapprove)
+        if (v.pollType === 'rep') {
+          const tier = v.tier || 'local';
+          if (!newRepPolls[pollId]) newRepPolls[pollId] = {};
+          if (!newRepPolls[pollId][tier]) newRepPolls[pollId][tier] = { approve: 0, disapprove: 0 };
+
+          if (choice === 'approve' || choice === 'yea') {
+            newRepPolls[pollId][tier].approve += 1;
+          } else if (choice === 'disapprove' || choice === 'nay') {
+            newRepPolls[pollId][tier].disapprove += 1;
           }
+        } 
+        // Custom community polls
+        else {
+          if (!newPollVotes[pollId]) newPollVotes[pollId] = {};
+          if (!newPollVotes[pollId][choice]) newPollVotes[pollId][choice] = 0;
+          newPollVotes[pollId][choice] += 1;
         }
       });
 
-      setRepPolls(repTemp);
+      setRepPolls(newRepPolls);
+      setPollVotes(newPollVotes);
     });
 
     return () => unsubscribe();
-  }, [user]);
-
-  // Auto fetch reps when ZIP changes
-  useEffect(() => {
-    if (zip.length === 5) {
-      fetchReps(zip);
-    }
-  }, [zip]);
-
+  }, []);
   // ... rest of your code
 
   // ====================== FUNCTIONS ======================
@@ -829,31 +910,90 @@ function App() {
     }
   };
 
-   const fetchRepDetails = async (rep: Rep) => {
-    setSelectedRep(rep);
-    setShowRepModal(true);
-    setRepDetails({ bio: 'Loading...', votes: [], bills: [], comments: [] });
+ const fetchRepDetails = async (rep: Rep) => {
+  setSelectedRep(rep);
+  setShowRepModal(true);
+  setRepDetails({ bio: 'Loading official data...', votes: [], bills: [], comments: [], earmarks: [] });
 
-    try {
-      setRepDetails({
-        bio: `Bio for ${rep.name}`,
-        votes: ['Mock vote 1', 'Mock vote 2'],
-        bills: ['H.R. 123 - Mock Bill (Passed)', 'S. 456 - Another Bill (Pending)'],
-        comments: ['Mock tweet 1', 'Mock tweet 2'],
-        earmarks: ['Mock earmark $1M', 'Mock earmark $2M']
-      });
-    } catch (err) {
-      console.error(err);
-      setRepDetails({
-        bio: `Mock bio for ${rep.name}`,
-        votes: ['Mock vote 1', 'Mock vote 2'],
-        bills: ['H.R. 123 - Mock Bill (Passed)', 'S. 456 - Another Bill (Pending)'],
-        comments: ['Mock tweet 1', 'Mock tweet 2'],
-        earmarks: ['Mock earmark $1M', 'Mock earmark $2M']
-      });
+  const apiKey = process.env.REACT_APP_CONGRESS_API_KEY;
+
+  const isTopOfficial = rep.id?.startsWith('president') || 
+                        rep.id?.startsWith('vice-president') || 
+                        rep.id?.startsWith('scotus-') || 
+                        rep.id?.startsWith('cabinet-');
+
+  if (!apiKey || isTopOfficial) {
+    setRepDetails({
+      bio: `Detailed biography and records for ${rep.name} are temporarily unavailable while we connect to official congressional data sources.`,
+      votes: ['Voting history unavailable at the moment'],
+      bills: ['Sponsored bills unavailable at the moment'],
+      comments: ['Recent public comments unavailable at the moment'],
+      earmarks: ['Earmark data unavailable at the moment']
+    });
+    return;
+  }
+
+  try {
+    let bioguideId = rep.id;
+
+    if (!bioguideId || bioguideId === 'unknown') {
+      const searchRes = await fetch(
+        `https://api.congress.gov/v3/member?search=${encodeURIComponent(rep.name)}&api_key=${apiKey}`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (!searchRes.ok) throw new Error('Search failed');
+      const searchData = await searchRes.json();
+      bioguideId = searchData.members?.[0]?.bioguideId || null;
     }
-  };
-   
+
+    if (!bioguideId) throw new Error('No bioguide ID found');
+
+    const [memberRes, billsRes] = await Promise.all([
+      fetch(`https://api.congress.gov/v3/member/${bioguideId}?api_key=${apiKey}`, {
+        headers: { Accept: 'application/json' }
+      }),
+      fetch(`https://api.congress.gov/v3/bill?sponsor=${bioguideId}&limit=6&api_key=${apiKey}`, {
+        headers: { Accept: 'application/json' }
+      })
+    ]);
+
+    // Extra safety: check status before trying to parse
+    if (!memberRes.ok || !billsRes.ok) {
+      const errorText = await memberRes.text(); // or billsRes.text()
+      console.error('Congress.gov returned error body:', errorText);
+      throw new Error(`HTTP error ${memberRes.status}`);
+    }
+
+    const [memberData, billsData] = await Promise.all([
+      memberRes.json(),
+      billsRes.json()
+    ]);
+
+    const member = memberData.member || {};
+
+    const recentBills = billsData.bills?.slice(0, 5).map((b: any) => 
+      `${b.congress} ${b.type?.toUpperCase() || ''}${b.number || ''} - ${b.title || 'Untitled Bill'}`
+    ) || [];
+
+    setRepDetails({
+      bio: member.biography || member.description || `Official biography for ${rep.name}`,
+      votes: ['Voting history unavailable at the moment'],
+      bills: recentBills.length > 0 ? recentBills : ['No recent sponsored bills found'],
+      comments: ['Recent public comments unavailable at the moment'],
+      earmarks: ['Earmark data unavailable at the moment']
+    });
+
+  } catch (err) {
+    console.error('Congress.gov API error (now safely handled):', err);
+    setRepDetails({
+      bio: `Detailed biography and records for ${rep.name} are temporarily unavailable while we connect to official congressional data sources.`,
+      votes: ['Voting history unavailable at the moment'],
+      bills: ['Sponsored bills unavailable at the moment'],
+      comments: ['Recent public comments unavailable at the moment'],
+      earmarks: ['Earmark data unavailable at the moment']
+    });
+  }
+};
      const verifyVoter = async (fullAddress: string) => {
     if (!fullAddress.trim()) {
       alert('Please enter your full address');
@@ -912,12 +1052,13 @@ function App() {
     }
   };
 
-    const handleVote = async (
-    choice: 'yea' | 'nay' | 'approve' | 'disapprove',
+      const handleVote = async (
+    choice: string,                    // actual option text for custom polls
     tier: string | null = null,
     earmark: string | null = null,
     comment: string | null = null,
-    repName: string | null = null
+    repName: string | null = null,
+    pollId: string | null = null       // ← NEW: make key unique per poll
   ) => {
     if (!user) {
       alert('Please sign in to vote!');
@@ -925,7 +1066,10 @@ function App() {
       return;
     }
 
-    const pollKey = `vote_${user.uid}_${repName || earmark || comment || 'main'}`;
+    // Unique key PER POLL
+    const actualPollId = pollId || repName || 'main';
+    const pollKey = `vote_${user.uid}_${actualPollId}`;
+
     if (localStorage.getItem(pollKey)) {
       alert('You already voted on this!');
       return;
@@ -933,40 +1077,17 @@ function App() {
 
     localStorage.setItem(pollKey, 'voted');
 
-    const effectiveTier = tier || (voterVerified ? 'in' : 'local');
+    let effectiveTier = 'out-of-state';
+    if (voterVerified) effectiveTier = 'verified';
+    else if (county) effectiveTier = 'local';
+    else if (userState) effectiveTier = 'in-state';
 
     try {
-      if (repName) {
-        setRepPolls((prev: any) => {
-          const repEntry = prev[repName] || {};
-          const tierEntry = repEntry[effectiveTier] || { approve: 0, disapprove: 0 };
-          const voteType = (choice === 'approve' || choice === 'yea') ? 'approve' : 'disapprove';
-
-          const updatedTier = {
-            ...tierEntry,
-            [voteType]: (tierEntry[voteType] || 0) + 1
-          };
-
-          return {
-            ...prev,
-            [repName]: {
-              ...repEntry,
-              [effectiveTier]: updatedTier
-            }
-          };
-        });
-      } else {
-        setPollResults(prev => ({
-          ...prev,
-          [choice]: (prev[choice as 'yea' | 'nay'] || 0) + 1
-        }));
-      }
-
       await addDoc(collection(db, 'votes'), {
         userId: user.uid,
         pollType: repName ? 'rep' : 'main',
-        pollId: repName || 'main',
-        choice,
+        pollId: actualPollId,
+        choice: choice,                    // exact option text
         tier: effectiveTier,
         timestamp: serverTimestamp()
       });
@@ -977,61 +1098,83 @@ function App() {
       alert('Failed to record vote. Please try again.');
     }
   };
-
   // ====================== RETURN ======================
   return (
     <div className="App">
-          {/* Header */}
-<header className="header">
-  <div className="header-main">
-    <h1>Politicker</h1>
-    <p>Your reps. Real-time. Your voice.</p>
-  </div>
+                  {/* Updated Header with Follow Us Links */}
+      <header className="header">
+        <div className="header-main">
+          <h1>Politicker</h1>
+          <p>Your reps. Real-time. Your voice.</p>
+        </div>
 
-  <div className="header-buttons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-    {user ? (
-      <span style={{ fontSize: '15px', color: '#333' }}>
-        Signed in as: <strong>{user.email}</strong>
-      </span>
-    ) : (
-      <button onClick={() => setShowAuth(true)} style={{ padding: '10px 16px' }}>
-        Sign In / Sign Up
-      </button>
-    )}
+        <div className="header-buttons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {user ? (
+            <span style={{ fontSize: '15px', color: '#333' }}>
+              Signed in as: <strong>{user.email}</strong>
+            </span>
+          ) : (
+            <button onClick={() => setShowAuth(true)} style={{ padding: '10px 16px' }}>
+              Sign In / Sign Up
+            </button>
+          )}
 
-    {/* Small Admin link */}
-    <span 
-      onClick={() => setShowAdmin(true)}
-      style={{
-        color: '#666',
-        fontSize: '14px',
-        cursor: 'pointer',
-        textDecoration: 'underline',
-        padding: '4px 8px',
-      }}
-    >
-      Admin
-    </span>
+          {/* Small Admin link */}
+          <span 
+            onClick={() => setShowAdmin(true)}
+            style={{
+              color: '#666',
+              fontSize: '14px',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: '4px 8px',
+            }}
+          >
+            Admin
+          </span>
 
-    <a
-      href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        backgroundColor: '#4CAF50',
-        color: 'white',
-        padding: '12px 20px',
-        borderRadius: '8px',
-        textDecoration: 'none',
-        fontWeight: '700'
-      }}
-    >
-      Donate Now
-    </a>
-  </div>
-</header>
+          {/* Follow Us Links - TikTok now clearly labeled */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '14px' }}>
+            <span style={{ color: '#555', whiteSpace: 'nowrap' }}>Follow us:</span>
+            
+            <a 
+              href="https://x.com/politicker_app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#000', textDecoration: 'none', fontWeight: '500' }}
+            >
+              𝕏 @politicker_app
+            </a>
+            
+            <a 
+              href="https://www.tiktok.com/@politickerapp.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#000', textDecoration: 'none', fontWeight: '500' }}
+            >
+              TikTok @politickerapp.com
+            </a>
+          </div>
 
-      {/* Banner */}
+          <a
+            href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: '700'
+            }}
+          >
+            Donate Now
+          </a>
+        </div>
+      </header>
+
+           {/* Updated Beta Banner - New tagline */}
       <div style={{
         backgroundColor: '#f8f9fa',
         padding: '20px 20px',
@@ -1042,16 +1185,20 @@ function App() {
         lineHeight: '1.6',
         color: '#222'
       }}>
-        <strong>Politicker</strong> — Building Transparency in Government<br/><br/>
-        We are developing a mobile first app that will make it easy for anyone to see what their elected representatives are doing anytime anywhere.<br/><br/>
-        <strong>This web prototype is only a visual example.</strong><br/>
-        It uses mock data to demonstrate how the final app will work.<br/><br/>
-        <strong>Your support on Indiegogo</strong> will help us fund the necessary APIs and development.
+        <strong>Politicker Beta</strong> — Continuously updating and bringing real-time accountability to our government<br/><br/>
+        
+        This is our working web beta. You can already enter your ZIP, see your representatives, 
+        cast real votes in community polls, and have your voice counted in real time.<br/><br/>
+        
+        <strong>Your votes right now are the biggest support you can give us.</strong><br/>
+        Every vote you cast helps test the system and proves what real voter engagement looks like.<br/><br/>
+        
+        The Indiegogo campaign is currently awaiting final approval and will launch very soon.<br/>
+        You can still support us directly through the <strong>Donate Now</strong> button in the header.
       </div>
 
-                 {/* Current Poll at Top */}
-              {/* Smart Filtered Polls Section */}
-      <div className="polls-section" style={{ margin: '20px 0' }}>
+             {/* Active Community Polls with Real Percentages */}
+      <div className="polls-section" style={{ margin: '25px 0' }}>
         <h3>Active Community Polls</h3>
         
         {pollLoading ? (
@@ -1060,13 +1207,16 @@ function App() {
           filteredPolls.map((poll: Poll) => {
             const pollId = poll.id || 'main';
             const isVoted = !!customPollVotes[pollId];
+            const votesForPoll = pollVotes[pollId] || {};
+
+            const totalVotes = Object.values(votesForPoll).reduce((sum, count) => sum + count, 0);
 
             return (
               <div key={pollId} className="poll-card" style={{ 
-                marginBottom: '25px', 
+                marginBottom: '30px', 
                 padding: '20px', 
                 border: '1px solid #ddd', 
-                borderRadius: '8px',
+                borderRadius: '10px',
                 backgroundColor: '#fafafa'
               }}>
                 <h4>{poll.question}</h4>
@@ -1074,7 +1224,7 @@ function App() {
                 <p style={{ 
                   fontSize: '14px', 
                   color: '#555', 
-                  marginBottom: '12px',
+                  marginBottom: '15px',
                   fontWeight: '500'
                 }}>
                   Scope: <strong>
@@ -1086,20 +1236,22 @@ function App() {
 
                 <form>
                   {poll.options.map((option: string, index: number) => {
+                    const voteCount = votesForPoll[option] || 0;
+                    const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
                     const isSelected = customPollVotes[pollId] === option;
 
                     return (
                       <label 
                         key={index} 
-                        className="poll-option" 
                         style={{ 
                           display: 'block', 
-                          padding: '12px', 
-                          margin: '8px 0', 
-                          background: isSelected ? '#e8f5e9' : '#f9f9f9',
-                          borderRadius: '6px',
+                          padding: '14px', 
+                          margin: '10px 0', 
+                          background: isSelected ? '#e8f5e9' : '#fff',
                           border: '1px solid #eee',
-                          cursor: isVoted ? 'default' : 'pointer'
+                          borderRadius: '8px',
+                          cursor: isVoted ? 'default' : 'pointer',
+                          position: 'relative'
                         }}
                       >
                         <input
@@ -1108,16 +1260,32 @@ function App() {
                           value={option}
                           checked={isSelected}
                           disabled={isVoted}
-                          onChange={() => {
-                            setCustomPollVotes(prev => ({
-                              ...prev,
-                              [pollId]: option
-                            }));
-                            handleVote('yea', null, null, null, null);
-                          }}
-                          style={{ marginRight: '10px' }}
+                         onChange={() => {
+  if (!user) {
+    alert('Please sign in to vote!');
+    setShowAuth(true);
+    return;
+  }
+  setCustomPollVotes(prev => ({
+    ...prev,
+    [pollId]: option
+  }));
+  handleVote(option, null, null, null, null, pollId);   // ← Pass pollId here
+}}
+                          style={{ marginRight: '12px' }}
                         />
                         {option}
+
+                        <span style={{ 
+                          position: 'absolute', 
+                          right: '20px', 
+                          color: '#666', 
+                          fontSize: '13px',
+                          fontWeight: '500'
+                        }}>
+                          {percent}%
+                        </span>
+
                         {isVoted && isSelected && <span style={{ color: '#4CAF50', marginLeft: '8px' }}>(Your vote)</span>}
                       </label>
                     );
@@ -1129,11 +1297,10 @@ function App() {
         ) : (
           <p style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
             No active polls match your location right now.<br />
-            Create new ones in the Admin panel!
+            
           </p>
         )}
       </div>
-
       {/* Voter Verification */}
       <div className="voter-verify">
         <h3>Verify Voter</h3>
@@ -1200,52 +1367,61 @@ function App() {
           </button>
         </div>
 
-                {/* Reps Grid */}
+                        {/* Reps Grid */}
         {reps.length > 0 && (activeTab === 'federal' || activeTab === 'state' || activeTab === 'all') && (
           <div className="reps-section">
             <p className="county-banner">Your County: {county || 'Unknown'}</p>
             
             <div className="reps-grid">
-                    {reps
-        .filter((rep) => {
-          if (activeTab === 'federal') {
-            return ['President', 'Vice President', 'Supreme Court', 'U.S. Senator', 'U.S. Representative'].some(level => 
-              rep.level.includes(level)
-            );
-          }
-          if (activeTab === 'state') {
-            return rep.level.includes('State House') || 
-                   rep.level.includes('State Senate') ||
-                   rep.level.toLowerCase().includes('state');
-          }
-          return true; // 'all' tab shows everything
-        })
-        .map((rep, i) => (
-                  <div
-                    key={i}
-                    className="rep-card"
-                    onClick={() => fetchRepDetails(rep)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img 
-                      src={rep.photo || 'https://placehold.co/100x100?text=Rep'} 
-                      alt={rep.name} 
-                      style={{ 
-                        width: '100px', 
-                        height: '100px', 
-                        objectFit: 'cover', 
-                        borderRadius: '8px' 
-                      }} 
-                    />
-                    <h4>{rep.name || 'Unknown'}</h4>
-                    <p><strong>Party:</strong> {rep.party || 'N/A'}</p>
-                    <p><strong>Level:</strong> {rep.level || 'N/A'}</p>
-                    <p><strong>Score:</strong> {rep.score || 50}%</p>
-                    {rep.xHandle && rep.xHandle !== '@Rep' && (
-                      <p><strong>X:</strong> {rep.xHandle}</p>
-                    )}
-                  </div>
-                ))}
+              {reps
+                .filter((rep) => {
+                  if (activeTab === 'federal') {
+                    return ['President', 'Vice President', 'Supreme Court', 'U.S. Senator', 'U.S. Representative'].some(level => 
+                      rep.level.includes(level)
+                    );
+                  }
+                  if (activeTab === 'state') {
+                    return rep.level.includes('State House') || 
+                           rep.level.includes('State Senate') ||
+                           rep.level.toLowerCase().includes('state');
+                  }
+                  return true;
+                })
+                .map((rep, i) => {
+                  // Calculate REAL approval percentage from votes
+                  const repResults = repPolls[rep.name] || {};
+                  const totalApprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.approve || 0), 0);
+                  const totalDisapprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.disapprove || 0), 0);
+                  const totalVotes = totalApprove + totalDisapprove;
+                  const realScore = totalVotes > 0 ? Math.round((totalApprove / totalVotes) * 100) : 50;
+
+                  return (
+                    <div
+                      key={i}
+                      className="rep-card"
+                      onClick={() => fetchRepDetails(rep)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img 
+                        src={rep.photo || 'https://placehold.co/100x100?text=Rep'} 
+                        alt={rep.name} 
+                        style={{ 
+                          width: '100px', 
+                          height: '100px', 
+                          objectFit: 'cover', 
+                          borderRadius: '8px' 
+                        }} 
+                      />
+                      <h4>{rep.name || 'Unknown'}</h4>
+                      <p><strong>Party:</strong> {rep.party || 'N/A'}</p>
+                      <p><strong>Level:</strong> {rep.level || 'N/A'}</p>
+                      <p><strong>Score:</strong> <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>{realScore}%</span></p>
+                      {rep.xHandle && rep.xHandle !== '@Rep' && (
+                        <p><strong>X:</strong> {rep.xHandle}</p>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -1276,6 +1452,8 @@ function App() {
           repPolls={repPolls}
           onClose={() => setShowRepModal(false)}
           handleVote={handleVote}
+          setSelectedPoll={setSelectedPoll}
+          setShowPollBreakdown={setShowPollBreakdown}
         />
       )}
 
@@ -1287,8 +1465,16 @@ function App() {
   />
 )}
       {showAuth && <AuthForm onClose={() => setShowAuth(false)} />}
+              {/* Poll Breakdown Modal */}
+      {showPollBreakdown && selectedPoll && (
+        <PollBreakdownModal 
+          pollOrRep={selectedPoll}
+          repPolls={repPolls} 
+          onClose={() => setShowPollBreakdown(false)} 
+        />
+      )}
     </div>
   );
 }
-
+      
 export default App;
