@@ -354,3 +354,17 @@
   background: #1976d2;
   color: white;
 }
+
+.admin-link {
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.admin-link:hover {
+  color: #000;
+}
