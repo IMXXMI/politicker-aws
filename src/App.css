@@ -368,3 +368,51 @@
 .admin-link:hover {
   color: #000;
 }
+/* Mobile-First Responsive Styles */
+.reps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 15px;
+}
+
+.rep-card {
+  padding: 12px;
+  text-align: center;
+}
+
+.poll-card {
+  padding: 18px;
+  margin-bottom: 25px;
+}
+
+.main-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.main-tabs button {
+  padding: 10px 14px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Make modals more mobile friendly */
+.modal {
+  max-width: 92vw !important;
+  margin: 10px auto;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.modal-overlay {
+  padding: 10px;
+}
+
+/* Touch-friendly buttons */
+button {
+  min-height: 44px; /* Apple guideline for touch targets */
+}

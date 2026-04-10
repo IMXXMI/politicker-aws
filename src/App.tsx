@@ -712,7 +712,7 @@ function App() {
     // Auth Listener
  
   // ... all your useState hooks ...
-
+const [showVerifyModal, setShowVerifyModal] = useState(false);
   // ====================== USE EFFECTS ======================
   // Fetch active polls from Firestore
     // Fetch ALL active polls
@@ -1101,120 +1101,110 @@ function App() {
   // ====================== RETURN ======================
   return (
     <div className="App">
-                          {/* Updated Header with The Dream Corporation Fiscal Sponsor */}
-      <header className="header">
-        <div className="header-main">
-          <h1>Politicker</h1>
-          <p>Your reps. Real-time. Your voice.</p>
-        </div>
-
-        <div className="header-buttons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {user ? (
-            <span style={{ fontSize: '15px', color: '#333' }}>
-              Signed in as: <strong>{user.email}</strong>
-            </span>
-          ) : (
-            <button onClick={() => setShowAuth(true)} style={{ padding: '10px 16px' }}>
-              Sign In / Sign Up
-            </button>
-          )}
-
-          {/* Small Admin link */}
-          <span 
-            onClick={() => setShowAdmin(true)}
-            style={{
-              color: '#666',
-              fontSize: '14px',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: '4px 8px',
-            }}
-          >
-            Admin
-          </span>
-
-          {/* Follow Us Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '14px' }}>
-            <span style={{ color: '#555', whiteSpace: 'nowrap' }}>Follow us:</span>
-            
-            <a 
-              href="https://x.com/politicker_app" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{ color: '#000', textDecoration: 'none', fontWeight: '500' }}
-            >
-              𝕏 @politicker_app
-            </a>
-            
-            <a 
-              href="https://www.tiktok.com/@politickerapp.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{ color: '#000', textDecoration: 'none', fontWeight: '500' }}
-            >
-              TikTok @politickerapp.com
-            </a>
+                                  {/* Header with Blue Background */}
+      <header className="header" style={{ 
+        padding: '12px 15px',
+        backgroundColor: '#007BFF',           // ← Blue background restored
+        color: 'white',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div>
+            <h1 style={{ margin: '0', fontSize: '22px', color: 'white' }}>Politicker</h1>
+            <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#e3f2fd' }}>
+              Beta • Real-time accountability
+            </p>
           </div>
 
-          {/* Donate Button + Non-Profit Label with Fiscal Sponsor Link */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-            <a
-              href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
-              target="_blank"
-              rel="noopener noreferrer"
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end'
+          }}>
+            {user ? (
+              <span style={{ fontSize: '14px', color: 'white' }}>
+                Signed in as: <strong>{user.email}</strong>
+              </span>
+            ) : (
+              <button 
+                onClick={() => setShowAuth(true)} 
+                style={{ 
+                  padding: '8px 14px', 
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap',
+                  backgroundColor: 'white',
+                  color: '#007BFF',
+                  border: 'none',
+                  borderRadius: '6px'
+                }}
+              >
+                Sign In
+              </button>
+            )}
+
+            <span 
+              onClick={() => setShowAdmin(true)}
               style={{
-                backgroundColor: '#4CAF50',
                 color: 'white',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: '700'
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 8px',
               }}
             >
-              Donate Now
-            </a>
-            <span style={{ 
-              fontSize: '13px', 
-              color: 'white', 
-              fontWeight: '600',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-            }}>
-              501(c)(3) Non-Profit • 
-              <a 
-                href="https://thedreamcorporation.org" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ color: 'white', textDecoration: 'underline' }}
-              >
-                The Dream Corporation
-              </a>
+              Admin
             </span>
+
+            {/* Follow Us */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
+              <a href="https://x.com/politicker_app" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'none' }}>𝕏</a>
+              <a href="https://www.tiktok.com/@politickerapp.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'none' }}>TikTok</a>
+            </div>
+
+            {/* Donate + Non-Profit */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+              <a
+                href="https://421557e3-d3e4-4ebc-8478-bab7bfe3d906.paylinks.godaddy.com/fe11c891-4dfe-4ba4-862a-46a"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  backgroundColor: 'white',
+                  color: '#007BFF',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontWeight: '700',
+                  fontSize: '15px',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Donate Now
+              </a>
+              <span style={{ 
+                fontSize: '12px', 
+                color: 'white', 
+                fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              }}>
+                501(c)(3) • <a href="https://thedreamcorporation.org" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>The Dream Corporation</a>
+              </span>
+            </div>
           </div>
         </div>
       </header>
-
-           {/* Updated Beta Banner - New tagline */}
-      <div style={{
-        backgroundColor: '#f8f9fa',
-        padding: '20px 20px',
-        margin: '15px 0',
-        borderRadius: '8px',
-        borderLeft: '5px solid #4CAF50',
-        fontSize: '15px',
-        lineHeight: '1.6',
-        color: '#222'
-      }}>
-        <strong>Politicker Beta</strong> — Continuously updating and bringing real-time accountability to our government<br/><br/>
-        
-        This is our working web beta. You can already enter your ZIP, see your representatives, 
-        cast real votes in community polls, and have your voice counted in real time.<br/><br/>
-        
-        <strong>Your votes right now are the biggest support you can give us.</strong><br/>
-        Every vote you cast helps test the system and proves what real voter engagement looks like.<br/><br/>
-        
-        The Indiegogo campaign is currently awaiting final approval and will launch very soon.<br/>
-        You can still support us directly through the <strong>Donate Now</strong> button in the header.
-      </div>
 
              {/* Active Community Polls with Real Percentages */}
       <div className="polls-section" style={{ margin: '25px 0' }}>
@@ -1320,73 +1310,97 @@ function App() {
           </p>
         )}
       </div>
-      {/* Voter Verification */}
-      <div className="voter-verify">
-        <h3>Verify Voter</h3>
-        <p>Enter your address (privacy protected — no name needed).</p>
-        <div className="address-grid">
-          <input
-            type="text"
-            placeholder="Street Address"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="City"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="State (e.g., VA)"
-            value={stateCode}
-            onChange={(e) => setStateCode(e.target.value.toUpperCase())}
-            maxLength={2}
-          />
-          <input
-            type="text"
-            placeholder="ZIP Code"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-            maxLength={5}
-          />
-        </div>
-        <button onClick={() => verifyVoter(`${street}, ${city}, ${stateCode} ${zip}`)}>
-          Verify Registration
+                {/* Simplified Voter Verification - Mobile Friendly */}
+      <div className="voter-verify" style={{ margin: '30px 0' }}>
+        <h3>Verify Voter Registration</h3>
+        <p style={{ marginBottom: '15px' }}>
+          Prove you&apos;re a real registered voter. This gives your votes more weight.
+        </p>
+        <button 
+          onClick={() => setShowVerifyModal(true)}
+          style={{ 
+            padding: '14px 24px', 
+            fontSize: '16px', 
+            backgroundColor: '#007BFF', 
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            width: '100%',
+            maxWidth: '320px'
+          }}
+        >
+          Verify My Registration
         </button>
-        {voterVerified && <p className="verified">✅ Voter registration verified!</p>}
       </div>
 
-      <main>
-        <button onClick={() => fetchReps(zip)} disabled={loading || !zip}>
-          {loading ? 'Loading Reps...' : 'Show My Reps'}
-        </button>
+                <main style={{ padding: '20px 15px' }}>
+        
+        {/* Compact ZIP Input */}
+        <div style={{ 
+          maxWidth: '420px', 
+          margin: '0 auto 25px auto',
+          textAlign: 'center'
+        }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="ZIP Code"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              maxLength={5}
+              style={{ 
+                flex: 1, 
+                padding: '14px', 
+                fontSize: '17px', 
+                borderRadius: '8px',
+                border: '2px solid #007BFF'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') fetchReps(zip);
+              }}
+            />
+            
+            <button 
+              onClick={() => fetchReps(zip)}
+              disabled={loading || zip.length < 5}
+              style={{ 
+                padding: '14px 22px', 
+                fontSize: '16px',
+                backgroundColor: '#007BFF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {loading ? 'Loading...' : 'Show Reps'}
+            </button>
+          </div>
+        </div>
 
         {/* Main Tabs */}
         <div className="main-tabs">
           <button className={activeTab === 'federal' ? 'active' : ''} onClick={() => setActiveTab('federal')}>
-            Federal Government
+            Federal
           </button>
           <button className={activeTab === 'state' ? 'active' : ''} onClick={() => setActiveTab('state')}>
-            State Government
+            State
           </button>
           <button className={activeTab === 'local' ? 'active' : ''} onClick={() => setActiveTab('local')}>
-  Local Government
-</button>
+            Local
+          </button>
           <button className={activeTab === 'international' ? 'active' : ''} onClick={() => setActiveTab('international')}>
             International
           </button>
           <button className={activeTab === 'spending' ? 'active' : ''} onClick={() => setActiveTab('spending')}>
-            Government Spending
+            Spending
           </button>
-
           <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>
-            All Representatives
+            All
           </button>
         </div>
 
-                        {/* Reps Grid */}
+        {/* Reps Grid */}
         {reps.length > 0 && (activeTab === 'federal' || activeTab === 'state' || activeTab === 'all') && (
           <div className="reps-section">
             <p className="county-banner">Your County: {county || 'Unknown'}</p>
@@ -1407,7 +1421,6 @@ function App() {
                   return true;
                 })
                 .map((rep, i) => {
-                  // Calculate REAL approval percentage from votes
                   const repResults = repPolls[rep.name] || {};
                   const totalApprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.approve || 0), 0);
                   const totalDisapprove = Object.values(repResults).reduce((sum: number, tier: any) => sum + (tier.disapprove || 0), 0);
@@ -1461,7 +1474,7 @@ function App() {
           </div>
         )}
 
-          </main>
+      </main>
 
       {/* Modals - ONLY these three lines */}
       {showRepModal && selectedRep && (
@@ -1492,6 +1505,49 @@ function App() {
           onClose={() => setShowPollBreakdown(false)} 
         />
       )}
+      {/* Verify Address Modal - Only shows when needed */}
+      {showVerifyModal && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '420px' }}>
+            <button 
+              className="modal-close" 
+              onClick={() => setShowVerifyModal(false)}
+            >
+              ×
+            </button>
+            
+            <h2>Verify Your Registration</h2>
+            <p>Enter your full address (street, city, state, ZIP). We only use this to verify you — nothing is stored.</p>
+            
+            <input
+              type="text"
+              placeholder="Full Address (e.g. 123 Main St, Chesterfield, VA 23112)"
+              value={street}   // we're reusing the street state for simplicity
+              onChange={(e) => setStreet(e.target.value)}
+              style={{ width: '100%', padding: '14px', margin: '15px 0', fontSize: '16px' }}
+            />
+            
+            <button 
+              onClick={() => {
+                verifyVoter(street);
+                setShowVerifyModal(false);
+              }}
+              style={{ 
+                width: '100%', 
+                padding: '14px', 
+                backgroundColor: '#4CAF50', 
+                color: 'white', 
+                fontSize: '16px',
+                border: 'none',
+                borderRadius: '8px'
+              }}
+            >
+              Submit & Verify
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
