@@ -333,6 +333,90 @@ const AdminModal: React.FC<{
   );
 };
 
+/// ====================== SHARE MODAL (with text labels) ======================
+const ShareModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const shareUrl = "https://politickerapp.com";
+  const shareText = "Politicker — Real-time government accountability. See what your reps are doing right now!";
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    alert("✅ Link copied to clipboard!");
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal" style={{ maxWidth: '460px', textAlign: 'center' }}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Share Politicker</h2>
+        <p style={{ marginBottom: '25px', color: '#555' }}>
+          Help bring transparency to government
+        </p>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(3, 1fr)', 
+          gap: '12px', 
+          marginBottom: '30px' 
+        }}>
+          
+          {/* X */}
+          <button 
+            onClick={() => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank'); onClose(); }} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#000', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            𝕏
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>X</span>
+          </button>
+
+          {/* Facebook */}
+          <button 
+            onClick={() => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank'); onClose(); }} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#1877F2', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            📘
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>Facebook</span>
+          </button>
+
+          {/* LinkedIn */}
+          <button 
+            onClick={() => { window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank'); onClose(); }} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#0A66C2', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            🔗
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>LinkedIn</span>
+          </button>
+
+          {/* WhatsApp */}
+          <button 
+            onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank'); onClose(); }} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#25D366', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            💬
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>WhatsApp</span>
+          </button>
+
+          {/* Email */}
+          <button 
+            onClick={() => { window.location.href = `mailto:?subject=Politicker&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`; onClose(); }} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#EA4335', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            ✉️
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>Email</span>
+          </button>
+
+          {/* Copy Link */}
+          <button 
+            onClick={copyToClipboard} 
+            style={{ padding: '16px 8px', fontSize: '26px', background: '#666', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            📋
+            <span style={{ fontSize: '13px', fontWeight: '600' }}>Copy</span>
+          </button>
+        </div>
+
+        <button onClick={onClose} style={{ width: '100%', padding: '14px', background: '#ddd', borderRadius: '8px' }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const AuthForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -710,11 +794,20 @@ function App() {
 
     return false;
   });
+
+    // ==================== LOCAL OFFICIALS (TEMPORARILY DISABLED) ====================
+  // const [showLocalModal, setShowLocalModal] = useState(false);
+  // const [localOfficials, setLocalOfficials] = useState<any[]>([]);
+
+  // const fetchLocalOfficials = async (fullAddress: string) => {
+  //   alert("Local officials lookup coming soon in the next update.");
+  // };
   // ====================== USE EFFECTS ======================
 
     // Auth Listener
  
   // ... all your useState hooks ...
+    const [showShareModal, setShowShareModal] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 const [showVerifyModal, setShowVerifyModal] = useState(false);
   // ====================== USE EFFECTS ======================
@@ -906,14 +999,25 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       allReps.unshift(...federalOfficials);
       setReps(allReps);
 
-    } catch (err) {
-      console.error('Fetch reps error:', err);
-      alert('Failed to load representatives. Please check your API key or try another ZIP.');
+         // ====================== DEDUPLICATE REPS (fixes duplicates) ======================
+      const seen = new Set();
+      const uniqueReps = allReps.filter((rep: Rep) => {
+        const key = `${rep.name.toLowerCase().trim()}-${rep.level || ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      console.log(`✅ fetchReps complete → ${uniqueReps.length} unique reps (removed ${allReps.length - uniqueReps.length} duplicates)`);
+
+      setReps(uniqueReps);
+    } catch (error) {
+      console.error('fetchReps error:', error);
+      setReps([]); // clear on error
     } finally {
       setLoading(false);
     }
   };
-
  const fetchRepDetails = async (rep: Rep) => {
   setSelectedRep(rep);
   setShowRepModal(true);
@@ -1104,23 +1208,30 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
   };
 
   
-      const fetchLocalOfficials = async (fullAddress: string) => {
-    if (!fullAddress.trim()) {
-      alert('Please enter your full address');
+     const fetchLocalOfficials = async (fullAddress: string) => {
+    const ciceroKey = process.env.REACT_APP_CICERO_API_KEY;
+    if (!ciceroKey) {
+      alert('Cicero API key is not configured');
       return;
     }
 
     try {
-      const res = await fetch(`/api/local-officials?address=${encodeURIComponent(fullAddress)}`);
+      // Using a public CORS proxy for development only
+      const proxy = 'https://corsproxy.io/?';
+      const url = `https://app.cicerodata.com/v3.1/official/?address=${encodeURIComponent(fullAddress)}&format=json&key=${ciceroKey}`;
+      
+      const res = await fetch(proxy + encodeURIComponent(url));
       
       if (!res.ok) {
-        throw new Error('Failed to load local officials');
+        throw new Error(`Cicero returned ${res.status}`);
       }
 
       const data = await res.json();
       setLocalOfficials(data.officials || []);
       
-      if (!data.officials || data.officials.length === 0) {
+      if (data.officials && data.officials.length > 0) {
+        console.log('Local officials loaded:', data.officials.length);
+      } else {
         alert('No local officials found for this address.');
       }
     } catch (err) {
@@ -1208,7 +1319,21 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
             >
               Admin
             </span>
-
+              <button 
+  onClick={() => setShowShareModal(true)}
+  style={{ 
+    background: '#28a745', 
+    color: 'white', 
+    padding: '8px 18px', 
+    borderRadius: '8px', 
+    fontSize: '15px', 
+    marginLeft: '10px',
+    border: 'none',
+    cursor: 'pointer'
+  }}
+>
+  Share
+</button>
             <span 
               onClick={() => setShowAbout(true)}
               style={{
@@ -1637,36 +1762,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         </div>
       )}
 
-      {/* Local Officials Modal - Cicero on-demand */}
-      {showLocalModal && (
-        <div className="modal-overlay">
-          <div className="modal" style={{ maxWidth: '420px' }}>
-            <button className="modal-close" onClick={() => setShowLocalModal(false)}>×</button>
-            <h2>Show My Local Officials</h2>
-            <p>Enter your full address to find mayors, city council, county officials, and more.</p>
-            <input
-              type="text"
-              placeholder="Full Address (e.g. 123 Main St, Chesterfield, VA 23112)"
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
-              style={{ width: '100%', padding: '14px', margin: '15px 0', fontSize: '16px' }}
-            />
-            <button 
-              onClick={() => {
-                if (street.trim()) {
-                  fetchLocalOfficials(street);
-                  setShowLocalModal(false);
-                } else {
-                  alert('Please enter your full address');
-                }
-              }}
-              style={{ width: '100%', padding: '14px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px' }}
-            >
-              Find Local Officials
-            </button>
-          </div>
-        </div>
-      )}
+      
 
             {/* About Us Modal - Final Version with Financial Breakdown */}
       {showAbout && (
@@ -1732,6 +1828,8 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
             >
               Close
             </button>
+             
+
           </div>
         </div>
       )}
@@ -1760,7 +1858,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
           </button>
         </div>
       )}
-
+      {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
     </div>
   );
 }
