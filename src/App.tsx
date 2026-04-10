@@ -712,6 +712,7 @@ function App() {
     // Auth Listener
  
   // ... all your useState hooks ...
+  const [showAbout, setShowAbout] = useState(false);
 const [showVerifyModal, setShowVerifyModal] = useState(false);
   // ====================== USE EFFECTS ======================
   // Fetch active polls from Firestore
@@ -1155,7 +1156,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               </button>
             )}
 
-            <span 
+                          <span 
               onClick={() => setShowAdmin(true)}
               style={{
                 color: 'white',
@@ -1166,6 +1167,19 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               }}
             >
               Admin
+            </span>
+
+            <span 
+              onClick={() => setShowAbout(true)}
+              style={{
+                color: 'white',
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 8px',
+              }}
+            >
+              About Us
             </span>
 
             {/* Follow Us */}
@@ -1206,7 +1220,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         </div>
       </header>
 
-             {/* Active Community Polls with Real Percentages */}
+                         {/* Active Community Polls with Real Percentages + Total Votes */}
       <div className="polls-section" style={{ margin: '25px 0' }}>
         <h3>Active Community Polls</h3>
         
@@ -1233,7 +1247,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                 <p style={{ 
                   fontSize: '14px', 
                   color: '#555', 
-                  marginBottom: '15px',
+                  marginBottom: '8px',
                   fontWeight: '500'
                 }}>
                   Scope: <strong>
@@ -1241,6 +1255,16 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                      poll.scope === 'state' ? `📍 ${poll.state || 'State'}` : 
                      `🏠 ${poll.county || 'County/Local'}`}
                   </strong>
+                </p>
+
+                {/* NEW: Total Votes Display */}
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#777', 
+                  marginBottom: '15px',
+                  fontWeight: '600'
+                }}>
+                  Total Votes: <strong>{totalVotes}</strong>
                 </p>
 
                 <form>
@@ -1269,18 +1293,18 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                           value={option}
                           checked={isSelected}
                           disabled={isVoted}
-                         onChange={() => {
-  if (!user) {
-    alert('Please sign in to vote!');
-    setShowAuth(true);
-    return;
-  }
-  setCustomPollVotes(prev => ({
-    ...prev,
-    [pollId]: option
-  }));
-  handleVote(option, null, null, null, null, pollId);   // ← Pass pollId here
-}}
+                          onChange={() => {
+                            if (!user) {
+                              alert('Please sign in to vote!');
+                              setShowAuth(true);
+                              return;
+                            }
+                            setCustomPollVotes(prev => ({
+                              ...prev,
+                              [pollId]: option
+                            }));
+                            handleVote(option, null, null, null, null, pollId);
+                          }}
                           style={{ marginRight: '12px' }}
                         />
                         {option}
@@ -1306,7 +1330,6 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         ) : (
           <p style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
             No active polls match your location right now.<br />
-            
           </p>
         )}
       </div>
@@ -1543,6 +1566,74 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               }}
             >
               Submit & Verify
+            </button>
+          </div>
+        </div>
+      )}
+
+            {/* About Us Modal - Final Version with Financial Breakdown */}
+      {showAbout && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button className="modal-close" onClick={() => setShowAbout(false)}>×</button>
+            
+            <h2>About Politicker</h2>
+            
+            <p><strong>What we are building:</strong></p>
+            <p>
+              Politicker is a mobile-first app that makes it easy for anyone to stay up to date with their elected officials.
+              Enter your ZIP code to see your representatives, view their actions, and cast real-time approval or disapproval votes.
+            </p>
+            
+            <p><strong>Why we are doing this:</strong></p>
+            <p>
+              Politicians should be accountable every single day — not just during election season. 
+              Right now, most voters feel ignored and disconnected from the decisions that affect their lives.
+            </p>
+            <p>
+              We believe that when citizens can easily see what their reps are doing and have a simple way to make their voice heard, 
+              <strong>together we cannot be ignored.</strong>
+            </p>
+
+            <p><strong>The power of your engagement:</strong></p>
+            <p>
+              Your votes and daily use of this beta are incredibly valuable. 
+              Every time you check your reps, cast a vote, or share the app, you help test real-time accountability and show what engaged citizenship looks like.
+            </p>
+            <p>
+              Making it convenient and easy to stay informed is our mission. The more people who use it, the stronger our collective voice becomes.
+            </p>
+
+            <p><strong>Why we need support (Financial Breakdown):</strong></p>
+            <ul style={{ paddingLeft: '20px' }}>
+              <li><strong>Real-time congressional &amp; government data APIs</strong> — $15,000–$25,000 per year</li>
+              <li><strong>Local government data access (Cicero and similar)</strong> — $20,000+ per year</li>
+              <li><strong>Voter registration verification systems</strong> — $10,000–$30,000 per year</li>
+              <li><strong>Full mobile app development (iOS + Android)</strong> — $40,000–$60,000</li>
+              <li><strong>Servers, hosting, security &amp; maintenance</strong> — $8,000–$12,000 per year</li>
+            </ul>
+            <p>
+              These costs are the reason many features are still limited in this beta. Your support helps us unlock complete, reliable data for every level of government.
+            </p>
+
+            <p><strong>How you can help right now:</strong></p>
+            <ul style={{ paddingLeft: '20px' }}>
+              <li>Use the app regularly and cast votes</li>
+              <li>Share Politicker with friends and family</li>
+              <li>Give us feedback on what you’d like to see next</li>
+              <li>Donate through the button in the header (tax-deductible)</li>
+            </ul>
+
+            <p>
+              We operate under <strong>The Dream Corporation</strong>, a 501(c)(3) nonprofit. 
+              Every donation is tax-deductible, but <strong>your daily engagement and votes are the most powerful support</strong>.
+            </p>
+
+            <button 
+              onClick={() => setShowAbout(false)}
+              style={{ marginTop: '25px', width: '100%', padding: '14px', fontSize: '17px' }}
+            >
+              Close
             </button>
           </div>
         </div>
