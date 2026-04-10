@@ -8,7 +8,8 @@ import {
   TwitterAuthProvider, 
   onAuthStateChanged, 
   User,
-  sendPasswordResetEmail   // ← Add this
+  sendPasswordResetEmail,
+  signOut   // ← Added
 } from 'firebase/auth';
 import { 
   collection, 
@@ -1099,6 +1100,17 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       alert('Failed to record vote. Please try again.');
     }
   };
+
+      const handleSignOut = async () => {
+        try {
+          await signOut(auth);
+          alert("You have been signed out successfully.");
+        } catch (err) {
+          console.error("Sign out error:", err);
+          alert("Failed to sign out. Please try again.");
+        }
+      };
+
   // ====================== RETURN ======================
   return (
     <div className="App">
@@ -1512,6 +1524,8 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         />
       )}
 
+
+
       {showAdmin && (
   <AdminModal 
     onClose={() => setShowAdmin(false)} 
@@ -1636,6 +1650,31 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               Close
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Sign Out Button - At the bottom as requested */}
+      {user && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '20px 15px', 
+          borderTop: '1px solid #eee',
+          marginTop: '40px'
+        }}>
+          <button 
+            onClick={handleSignOut}
+            style={{ 
+              padding: '10px 24px', 
+              fontSize: '15px',
+              backgroundColor: '#f44336',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Sign Out
+          </button>
         </div>
       )}
 
