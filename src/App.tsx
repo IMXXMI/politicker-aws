@@ -1511,7 +1511,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
       </main>
 
-      {/* Modals - ONLY these three lines */}
+           {/* Modals - All now properly centered */}
       {showRepModal && selectedRep && (
         <RepModal
           selectedRep={selectedRep}
@@ -1524,17 +1524,20 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         />
       )}
 
-
-
       {showAdmin && (
-  <AdminModal 
-    onClose={() => setShowAdmin(false)} 
-    user={user} 
-    setShowAuth={setShowAuth} 
-  />
-)}
-      {showAuth && <AuthForm onClose={() => setShowAuth(false)} />}
-              {/* Poll Breakdown Modal */}
+        <AdminModal 
+          onClose={() => setShowAdmin(false)} 
+          user={user} 
+          setShowAuth={setShowAuth} 
+        />
+      )}
+
+      {showAuth && (
+        <div className="modal-overlay">
+          <AuthForm onClose={() => setShowAuth(false)} />
+        </div>
+      )}
+
       {showPollBreakdown && selectedPoll && (
         <PollBreakdownModal 
           pollOrRep={selectedPoll}
@@ -1542,7 +1545,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
           onClose={() => setShowPollBreakdown(false)} 
         />
       )}
-      {/* Verify Address Modal - Only shows when needed */}
+
       {showVerifyModal && (
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '420px' }}>
@@ -1559,7 +1562,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
             <input
               type="text"
               placeholder="Full Address (e.g. 123 Main St, Chesterfield, VA 23112)"
-              value={street}   // we're reusing the street state for simplicity
+              value={street}
               onChange={(e) => setStreet(e.target.value)}
               style={{ width: '100%', padding: '14px', margin: '15px 0', fontSize: '16px' }}
             />
