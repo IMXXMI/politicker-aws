@@ -668,6 +668,8 @@ const RepModal: React.FC<{
 // ====================== MAIN APP ======================
 function App() {
    // ====================== STATE ======================
+     const [showLocalModal, setShowLocalModal] = useState(false);
+  const [localOfficials, setLocalOfficials] = useState([]);
    const [pollVotes, setPollVotes] = useState<{ [pollId: string]: { [option: string]: number } }>({});
    const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
@@ -1101,6 +1103,32 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
     }
   };
 
+  
+      const fetchLocalOfficials = async (fullAddress: string) => {
+    if (!fullAddress.trim()) {
+      alert('Please enter your full address');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/local-officials?address=${encodeURIComponent(fullAddress)}`);
+      
+      if (!res.ok) {
+        throw new Error('Failed to load local officials');
+      }
+
+      const data = await res.json();
+      setLocalOfficials(data.officials || []);
+      
+      if (!data.officials || data.officials.length === 0) {
+        alert('No local officials found for this address.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load local officials. Please try again later.');
+    }
+  };
+
       const handleSignOut = async () => {
         try {
           await signOut(auth);
@@ -1368,7 +1396,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         </button>
       </div>
 
-                <main style={{ padding: '20px 15px' }}>
+                            <main style={{ padding: '20px 15px' }}>
         
         {/* Compact ZIP Input */}
         <div style={{ 
@@ -1490,6 +1518,27 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                   );
                 })}
             </div>
+
+            {/* Local Officials Button */}
+            <button 
+              onClick={() => setShowLocalModal(true)}
+              style={{ 
+                marginTop: '25px', 
+                padding: '14px 28px', 
+                backgroundColor: '#28a745', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '8px', 
+                fontSize: '16px',
+                width: '100%',
+                maxWidth: '340px',
+                display: 'block',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}
+            >
+              Show My Local Officials
+            </button>
           </div>
         )}
 
@@ -1583,6 +1632,37 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               }}
             >
               Submit & Verify
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Local Officials Modal - Cicero on-demand */}
+      {showLocalModal && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '420px' }}>
+            <button className="modal-close" onClick={() => setShowLocalModal(false)}>×</button>
+            <h2>Show My Local Officials</h2>
+            <p>Enter your full address to find mayors, city council, county officials, and more.</p>
+            <input
+              type="text"
+              placeholder="Full Address (e.g. 123 Main St, Chesterfield, VA 23112)"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              style={{ width: '100%', padding: '14px', margin: '15px 0', fontSize: '16px' }}
+            />
+            <button 
+              onClick={() => {
+                if (street.trim()) {
+                  fetchLocalOfficials(street);
+                  setShowLocalModal(false);
+                } else {
+                  alert('Please enter your full address');
+                }
+              }}
+              style={{ width: '100%', padding: '14px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px' }}
+            >
+              Find Local Officials
             </button>
           </div>
         </div>
