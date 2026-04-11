@@ -1018,90 +1018,77 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       setLoading(false);
     }
   };
- const fetchRepDetails = async (rep: Rep) => {
-  setSelectedRep(rep);
-  setShowRepModal(true);
-  setRepDetails({ bio: 'Loading official data...', votes: [], bills: [], comments: [], earmarks: [] });
+   const fetchRepDetails = async (rep: Rep) => {
+    console.log('Fetching details for rep:', rep.name);
+    setSelectedRep(rep);
+    setShowRepModal(true);
 
-  const apiKey = process.env.REACT_APP_CONGRESS_API_KEY;
-
-  const isTopOfficial = rep.id?.startsWith('president') || 
-                        rep.id?.startsWith('vice-president') || 
-                        rep.id?.startsWith('scotus-') || 
-                        rep.id?.startsWith('cabinet-');
-
-  if (!apiKey || isTopOfficial) {
     setRepDetails({
-      bio: `Detailed biography and records for ${rep.name} are temporarily unavailable while we connect to official congressional data sources.`,
-      votes: ['Voting history unavailable at the moment'],
-      bills: ['Sponsored bills unavailable at the moment'],
-      comments: ['Recent public comments unavailable at the moment'],
-      earmarks: ['Earmark data unavailable at the moment']
+      bio: 'Loading official data from Congress.gov...',
+      votes: [],
+      bills: [],
+      comments: [],
+      earmarks: []
     });
-    return;
-  }
 
-  try {
-    let bioguideId = rep.id;
+    // Top officials (President, VP, Supreme Court, Cabinet) don't have standard congressional records
+    const isTopOfficial = rep.id?.startsWith('president') || 
+                         rep.id?.startsWith('vice-president') || 
+                         rep.id?.startsWith('scotus-') || 
+                         rep.id?.startsWith('cabinet-');
 
-    if (!bioguideId || bioguideId === 'unknown') {
-      const searchRes = await fetch(
-        `https://api.congress.gov/v3/member?search=${encodeURIComponent(rep.name)}&api_key=${apiKey}`,
-        { headers: { Accept: 'application/json' } }
-      );
-      if (!searchRes.ok) throw new Error('Search failed');
-      const searchData = await searchRes.json();
-      bioguideId = searchData.members?.[0]?.bioguideId || null;
+    if (isTopOfficial) {
+      setRepDetails({
+        bio: `${rep.name} is a high-level federal official. Detailed voting records and sponsored bills for top executive and judicial positions are not available through standard congressional APIs at this time.`,
+        votes: ['Detailed voting history coming soon'],
+        bills: ['Sponsored legislation data coming soon'],
+        comments: [],
+        earmarks: ['Earmark tracking coming soon']
+      });
+      return;
     }
 
-    if (!bioguideId) throw new Error('No bioguide ID found');
+    const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
 
-    const [memberRes, billsRes] = await Promise.all([
-      fetch(`https://api.congress.gov/v3/member/${bioguideId}?api_key=${apiKey}`, {
-        headers: { Accept: 'application/json' }
-      }),
-      fetch(`https://api.congress.gov/v3/bill?sponsor=${bioguideId}&limit=6&api_key=${apiKey}`, {
-        headers: { Accept: 'application/json' }
-      })
-    ]);
+    try {
+      let bioguideId = rep.id;
 
-    // Extra safety: check status before trying to parse
-    if (!memberRes.ok || !billsRes.ok) {
-      const errorText = await memberRes.text(); // or billsRes.text()
-      console.error('Congress.gov returned error body:', errorText);
-      throw new Error(`HTTP error ${memberRes.status}`);
+      // Recent bills endpoint from Congress.gov
+      let bills: string[] = ['Recent sponsored bills coming soon'];
+
+      if (bioguideId && bioguideId.length > 5 && congressKey) {
+        const billsRes = await fetch(
+          `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=5&sort=latestActionDate&format=json`,
+          { headers: { 'X-API-Key': congressKey } }
+        );
+
+        if (billsRes.ok) {
+          const billsData = await billsRes.json();
+          bills = billsData.bills?.slice(0, 5).map((b: any) => 
+            `${b.title || b.shortTitle} (${b.congress})`
+          ) || bills;
+        }
+      }
+
+      setRepDetails({
+        bio: 'Official biographical details and full voting history are being integrated from public congressional sources. More complete profiles coming soon.',
+        votes: ['Recent vote positions coming soon'],
+        bills: bills,
+        comments: ['Public comments and constituent feedback features coming in future updates'],
+        earmarks: ['Earmark and spending transparency tools coming soon']
+      });
+
+    } catch (err) {
+      console.error('Congress.gov fetch failed:', err);
+      setRepDetails({
+        bio: 'We are actively integrating more public data sources (Congress.gov and others) to bring you richer bios, bills, and voting records. This feature is coming soon.',
+        votes: ['Detailed voting records coming soon'],
+        bills: ['Sponsored bills coming soon'],
+        comments: [],
+        earmarks: ['Earmark tracking coming soon']
+      });
     }
-
-    const [memberData, billsData] = await Promise.all([
-      memberRes.json(),
-      billsRes.json()
-    ]);
-
-    const member = memberData.member || {};
-
-    const recentBills = billsData.bills?.slice(0, 5).map((b: any) => 
-      `${b.congress} ${b.type?.toUpperCase() || ''}${b.number || ''} - ${b.title || 'Untitled Bill'}`
-    ) || [];
-
-    setRepDetails({
-      bio: member.biography || member.description || `Official biography for ${rep.name}`,
-      votes: ['Voting history unavailable at the moment'],
-      bills: recentBills.length > 0 ? recentBills : ['No recent sponsored bills found'],
-      comments: ['Recent public comments unavailable at the moment'],
-      earmarks: ['Earmark data unavailable at the moment']
-    });
-
-  } catch (err) {
-    console.error('Congress.gov API error (now safely handled):', err);
-    setRepDetails({
-      bio: `Detailed biography and records for ${rep.name} are temporarily unavailable while we connect to official congressional data sources.`,
-      votes: ['Voting history unavailable at the moment'],
-      bills: ['Sponsored bills unavailable at the moment'],
-      comments: ['Recent public comments unavailable at the moment'],
-      earmarks: ['Earmark data unavailable at the moment']
-    });
-  }
-};
+  };
      const verifyVoter = async (fullAddress: string) => {
     if (!fullAddress.trim()) {
       alert('Please enter your full address');
