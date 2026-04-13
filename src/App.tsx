@@ -1051,11 +1051,8 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
       const bioguideId = rep.id;
 
-      // More reliable CORS proxy for local development
-      const proxy = window.location.hostname === 'localhost' 
-        ? 'https://api.allorigins.win/raw?url=' 
-        : '';
-
+      // Reliable CORS proxy for both local and live
+      const proxy = 'https://api.allorigins.win/raw?url=';
       const url = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json`;
 
       const res = await fetch(proxy + encodeURIComponent(url), {
