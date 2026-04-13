@@ -222,7 +222,7 @@
           "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
           "secretsPathAmplifyAppId": "duly49kc98uca",
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/apiProxy-38646d484351764e7850-build.zip",
+          "s3Key": "amplify-builds/apiProxy-666652696d7636735851-build.zip",
           "apipolitickerGraphQLAPIIdOutput": {
             "Fn::GetAtt": [
               "apipoliticker",

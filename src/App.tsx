@@ -62,10 +62,16 @@ type Rep = {
   xHandle: string;
 };
 
+type BillItem = {
+  title: string;
+  latestAction?: string | null;
+  congressUrl?: string | null;
+};
+
 type RepDetails = {
   bio: string;
   votes: string[];
-  bills: string[];
+  bills: BillItem[];
   comments: string[];
   earmarks?: string[];
 };
@@ -125,6 +131,170 @@ const stateVoterLookup: { [key: string]: string } = {
   'WI': 'https://myvote.wi.gov/en-us/My-Voter-Info',
   'WY': 'https://sos.wyo.gov/Elections/RegisteringToVote.aspx'
 };
+
+// ====================== STATE OPEN DATA SOURCES - FULL LOCAL (School Board + Officials + Judges) ======================
+const stateOpenDataSources: { [key: string]: {
+  portalUrl: string;
+  schoolBoardDatasetUrl: string;
+  localOfficialsDatasetUrl: string;
+  judgesDatasetUrl: string;
+  notes: string;
+  platform: 'Socrata' | 'ArcGIS' | 'Custom' | 'Limited';
+} } = {
+  'AL': { portalUrl: 'https://data.alabama.gov', schoolBoardDatasetUrl: 'https://data.alabama.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.alabama.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.alabama.gov/search?q=judges', notes: 'Limited but usable', platform: 'Socrata' },
+  'AK': { portalUrl: 'https://data.alaska.gov', schoolBoardDatasetUrl: 'https://data.alaska.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.alaska.gov/search?q=borough%20officials', judgesDatasetUrl: 'https://data.alaska.gov/search?q=judges', notes: 'Good for borough level', platform: 'Socrata' },
+  'AZ': { portalUrl: 'https://data.az.gov', schoolBoardDatasetUrl: 'https://data.az.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.az.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.az.gov/search?q=judges', notes: 'Strong local data', platform: 'Socrata' },
+  'AR': { portalUrl: 'https://data.arkansas.gov', schoolBoardDatasetUrl: 'https://data.arkansas.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.arkansas.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.arkansas.gov/search?q=judges', notes: 'Moderate coverage', platform: 'Socrata' },
+  'CA': { portalUrl: 'https://data.ca.gov', schoolBoardDatasetUrl: 'https://data.ca.gov/search?q=school%20board%20members', localOfficialsDatasetUrl: 'https://data.ca.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ca.gov/search?q=judges', notes: 'Excellent coverage', platform: 'Socrata' },
+  'CO': { portalUrl: 'https://data.colorado.gov', schoolBoardDatasetUrl: 'https://data.colorado.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.colorado.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.colorado.gov/search?q=judges', notes: 'Very good', platform: 'Socrata' },
+  'CT': { portalUrl: 'https://data.ct.gov', schoolBoardDatasetUrl: 'https://data.ct.gov/search?q=board%20of%20education', localOfficialsDatasetUrl: 'https://data.ct.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.ct.gov/search?q=judges', notes: 'Strong', platform: 'Socrata' },
+  'DE': { portalUrl: 'https://data.delaware.gov', schoolBoardDatasetUrl: 'https://data.delaware.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.delaware.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.delaware.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'FL': { portalUrl: 'https://data.myflorida.com', schoolBoardDatasetUrl: 'https://data.myflorida.com/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.myflorida.com/search?q=county%20officials', judgesDatasetUrl: 'https://data.myflorida.com/search?q=judges', notes: 'Growing portal', platform: 'Custom' },
+  'GA': { portalUrl: 'https://data.ga.gov', schoolBoardDatasetUrl: 'https://data.ga.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ga.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ga.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'HI': { portalUrl: 'https://data.hawaii.gov', schoolBoardDatasetUrl: 'https://data.hawaii.gov/search?q=board%20of%20education', localOfficialsDatasetUrl: 'https://data.hawaii.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.hawaii.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'ID': { portalUrl: 'https://data.idaho.gov', schoolBoardDatasetUrl: 'https://data.idaho.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.idaho.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.idaho.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'IL': { portalUrl: 'https://data.illinois.gov', schoolBoardDatasetUrl: 'https://data.illinois.gov/search?q=board%20of%20education', localOfficialsDatasetUrl: 'https://data.illinois.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.illinois.gov/search?q=judges', notes: 'Strong education + county', platform: 'Socrata' },
+  'IN': { portalUrl: 'https://data.in.gov', schoolBoardDatasetUrl: 'https://data.in.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.in.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.in.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'IA': { portalUrl: 'https://data.iowa.gov', schoolBoardDatasetUrl: 'https://data.iowa.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.iowa.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.iowa.gov/search?q=judges', notes: 'Very good', platform: 'Socrata' },
+  'KS': { portalUrl: 'https://data.ks.gov', schoolBoardDatasetUrl: 'https://data.ks.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ks.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ks.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'KY': { portalUrl: 'https://data.ky.gov', schoolBoardDatasetUrl: 'https://data.ky.gov/search?q=board%20of%20education', localOfficialsDatasetUrl: 'https://data.ky.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ky.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'LA': { portalUrl: 'https://data.louisiana.gov', schoolBoardDatasetUrl: 'https://data.louisiana.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.louisiana.gov/search?q=parish%20officials', judgesDatasetUrl: 'https://data.louisiana.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'ME': { portalUrl: 'https://data.maine.gov', schoolBoardDatasetUrl: 'https://data.maine.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.maine.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.maine.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'MD': { portalUrl: 'https://data.maryland.gov', schoolBoardDatasetUrl: 'https://data.maryland.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.maryland.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.maryland.gov/search?q=judges', notes: 'Strong local data', platform: 'Socrata' },
+  'MA': { portalUrl: 'https://data.mass.gov', schoolBoardDatasetUrl: 'https://data.mass.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.mass.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.mass.gov/search?q=judges', notes: 'Excellent coverage', platform: 'Socrata' },
+  'MI': { portalUrl: 'https://data.michigan.gov', schoolBoardDatasetUrl: 'https://data.michigan.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.michigan.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.michigan.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'MN': { portalUrl: 'https://data.mn.gov', schoolBoardDatasetUrl: 'https://data.mn.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.mn.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.mn.gov/search?q=judges', notes: 'Very good', platform: 'Socrata' },
+  'MS': { portalUrl: 'https://data.ms.gov', schoolBoardDatasetUrl: 'https://data.ms.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ms.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ms.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'MO': { portalUrl: 'https://data.mo.gov', schoolBoardDatasetUrl: 'https://data.mo.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.mo.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.mo.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'MT': { portalUrl: 'https://data.mt.gov', schoolBoardDatasetUrl: 'https://data.mt.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.mt.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.mt.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'NE': { portalUrl: 'https://data.nebraska.gov', schoolBoardDatasetUrl: 'https://data.nebraska.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nebraska.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nebraska.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'NV': { portalUrl: 'https://data.nv.gov', schoolBoardDatasetUrl: 'https://data.nv.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nv.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nv.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'NH': { portalUrl: 'https://data.nh.gov', schoolBoardDatasetUrl: 'https://data.nh.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nh.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nh.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'NJ': { portalUrl: 'https://data.nj.gov', schoolBoardDatasetUrl: 'https://data.nj.gov/search?q=board%20of%20education', localOfficialsDatasetUrl: 'https://data.nj.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.nj.gov/search?q=judges', notes: 'Strong coverage', platform: 'Socrata' },
+  'NM': { portalUrl: 'https://data.nm.gov', schoolBoardDatasetUrl: 'https://data.nm.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nm.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nm.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'NY': { portalUrl: 'https://data.ny.gov', schoolBoardDatasetUrl: 'https://data.ny.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ny.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ny.gov/search?q=judges', notes: 'Excellent coverage', platform: 'Socrata' },
+  'NC': { portalUrl: 'https://data.nconemap.gov', schoolBoardDatasetUrl: 'https://data.nconemap.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nconemap.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nconemap.gov/search?q=judges', notes: 'Very strong local data', platform: 'ArcGIS' },
+  'ND': { portalUrl: 'https://data.nd.gov', schoolBoardDatasetUrl: 'https://data.nd.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.nd.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.nd.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'OH': { portalUrl: 'https://data.ohio.gov', schoolBoardDatasetUrl: 'https://data.ohio.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ohio.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ohio.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'OK': { portalUrl: 'https://data.ok.gov', schoolBoardDatasetUrl: 'https://data.ok.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ok.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.ok.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'OR': { portalUrl: 'https://data.oregon.gov', schoolBoardDatasetUrl: 'https://data.oregon.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.oregon.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.oregon.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'PA': { portalUrl: 'https://data.pa.gov', schoolBoardDatasetUrl: 'https://data.pa.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.pa.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.pa.gov/search?q=judges', notes: 'Strong coverage', platform: 'Socrata' },
+  'RI': { portalUrl: 'https://data.ri.gov', schoolBoardDatasetUrl: 'https://data.ri.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.ri.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.ri.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'SC': { portalUrl: 'https://data.sc.gov', schoolBoardDatasetUrl: 'https://data.sc.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.sc.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.sc.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'SD': { portalUrl: 'https://data.sd.gov', schoolBoardDatasetUrl: 'https://data.sd.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.sd.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.sd.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'TN': { portalUrl: 'https://data.tn.gov', schoolBoardDatasetUrl: 'https://data.tn.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.tn.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.tn.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'TX': { portalUrl: 'https://data.texas.gov', schoolBoardDatasetUrl: 'https://data.texas.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.texas.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.texas.gov/search?q=judges', notes: 'Very large and comprehensive', platform: 'Socrata' },
+  'UT': { portalUrl: 'https://data.utah.gov', schoolBoardDatasetUrl: 'https://data.utah.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.utah.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.utah.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'VT': { portalUrl: 'https://data.vermont.gov', schoolBoardDatasetUrl: 'https://data.vermont.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.vermont.gov/search?q=municipal%20officials', judgesDatasetUrl: 'https://data.vermont.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+  'VA': { portalUrl: 'https://data.virginia.gov', schoolBoardDatasetUrl: 'https://data.virginia.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.virginia.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.virginia.gov/search?q=judges', notes: 'Strong coverage for your area', platform: 'Socrata' },
+  'WA': { portalUrl: 'https://data.wa.gov', schoolBoardDatasetUrl: 'https://data.wa.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.wa.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.wa.gov/search?q=judges', notes: 'High quality', platform: 'Socrata' },
+  'WV': { portalUrl: 'https://data.wv.gov', schoolBoardDatasetUrl: 'https://data.wv.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.wv.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.wv.gov/search?q=judges', notes: 'Moderate', platform: 'Socrata' },
+  'WI': { portalUrl: 'https://data.wi.gov', schoolBoardDatasetUrl: 'https://data.wi.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.wi.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.wi.gov/search?q=judges', notes: 'Good coverage', platform: 'Socrata' },
+  'WY': { portalUrl: 'https://data.wyo.gov', schoolBoardDatasetUrl: 'https://data.wyo.gov/search?q=school%20board', localOfficialsDatasetUrl: 'https://data.wyo.gov/search?q=county%20officials', judgesDatasetUrl: 'https://data.wyo.gov/search?q=judges', notes: 'Limited', platform: 'Socrata' },
+};
+
+// ====================== SUPREME COURT JUSTICES (Hardcoded) ======================
+const supremeCourtJustices: Rep[] = [
+  {
+    name: 'John G. Roberts, Jr.',
+    party: 'Chief Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Official_roberts_cjr.jpg/800px-Official_roberts_cjr.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 85,
+    id: 'scotus-roberts',
+    xHandle: ''
+  },
+  {
+    name: 'Clarence Thomas',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Clarence_Thomas_official_photo.jpg/800px-Clarence_Thomas_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 78,
+    id: 'scotus-thomas',
+    xHandle: ''
+  },
+  {
+    name: 'Samuel Alito',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Samuel_Alito_official_photo.jpg/800px-Samuel_Alito_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 82,
+    id: 'scotus-alito',
+    xHandle: ''
+  },
+  {
+    name: 'Sonia Sotomayor',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Sonia_Sotomayor_official_photo.jpg/800px-Sonia_Sotomayor_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 88,
+    id: 'scotus-sotomayor',
+    xHandle: ''
+  },
+  {
+    name: 'Elena Kagan',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Elena_Kagan_official_photo.jpg/800px-Elena_Kagan_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 82,
+    id: 'scotus-kagan',
+    xHandle: ''
+  },
+  {
+    name: 'Neil Gorsuch',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Neil_Gorsuch_official_photo.jpg/800px-Neil_Gorsuch_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 80,
+    id: 'scotus-gorsuch',
+    xHandle: ''
+  },
+  {
+    name: 'Brett Kavanaugh',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Brett_Kavanaugh_official_photo.jpg/800px-Brett_Kavanaugh_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 79,
+    id: 'scotus-kavanaugh',
+    xHandle: ''
+  },
+  {
+    name: 'Amy Coney Barrett',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Amy_Coney_Barrett_official_photo.jpg/800px-Amy_Coney_Barrett_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 81,
+    id: 'scotus-barrett',
+    xHandle: ''
+  },
+  {
+    name: 'Ketanji Brown Jackson',
+    party: 'Associate Justice',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Ketanji_Brown_Jackson_official_photo.jpg/800px-Ketanji_Brown_Jackson_official_photo.jpg',
+    level: 'Supreme Court',
+    contact: 'https://www.supremecourt.gov/contact/contactus.aspx',
+    phone: '(202) 479-3000',
+    score: 84,
+    id: 'scotus-jackson',
+    xHandle: ''
+  }
+];
 
 // ====================== SUB-COMPONENTS ======================
 const AdminModal: React.FC<{ 
@@ -710,14 +880,83 @@ const RepModal: React.FC<{
           )}
         </div>
 
+        {/* Sponsored Bills */}
+        <div style={{ marginTop: '30px' }}>
+          <h3>Recent Sponsored Bills</h3>
+          {repDetails.bills && repDetails.bills.length > 0 ? (
+            <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px', padding: '10px' }}>
+              {repDetails.bills.map((bill: BillItem, index: number) => {
+                const billPollId = `bill_${selectedRep.name}_${index}`;
+                return (
+                  <div key={index} style={{ padding: '12px 15px', marginBottom: '8px', background: '#f9f9f9', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: bill.latestAction ? '4px' : '8px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 500, flex: 1 }}>{bill.title}</span>
+                      {bill.congressUrl && (
+                        <a href={bill.congressUrl} target="_blank" rel="noopener noreferrer"
+                           style={{ fontSize: '12px', color: '#007bff', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          More Info →
+                        </a>
+                      )}
+                    </div>
+                    {bill.latestAction && (
+                      <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>{bill.latestAction}</p>
+                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleVote('approve', null, null, null, selectedRep.name, billPollId)}
+                        style={{ backgroundColor: '#4CAF50', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                      >👍 Support</button>
+                      <button
+                        onClick={() => handleVote('disapprove', null, null, null, selectedRep.name, billPollId)}
+                        style={{ backgroundColor: '#f44336', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                      >👎 Oppose</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontStyle: 'italic', color: '#777' }}>No recent bills loaded yet.</p>
+          )}
+        </div>
+
+        {/* Earmarks */}
+        <div style={{ marginTop: '30px' }}>
+          <h3>Earmarks &amp; Spending</h3>
+          {repDetails.earmarks && repDetails.earmarks.length > 0 ? (
+            <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px', padding: '10px' }}>
+              {repDetails.earmarks.map((earmark: string, index: number) => {
+                const earmarkPollId = `earmark_${selectedRep.name}_${index}`;
+                return (
+                  <div key={index} style={{ padding: '12px 15px', marginBottom: '8px', background: '#f9f9f9', borderRadius: '6px' }}>
+                    <p style={{ margin: '0 0 8px', fontSize: '14px' }}>{earmark}</p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleVote('approve', null, null, null, selectedRep.name, earmarkPollId)}
+                        style={{ backgroundColor: '#4CAF50', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                      >👍 Support</button>
+                      <button
+                        onClick={() => handleVote('disapprove', null, null, null, selectedRep.name, earmarkPollId)}
+                        style={{ backgroundColor: '#f44336', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                      >👎 Oppose</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontStyle: 'italic', color: '#777' }}>Earmark data coming soon.</p>
+          )}
+        </div>
+
         {/* Live Poll Bar */}
-        <RepPollBar 
-          rep={selectedRep} 
-          repPolls={repPolls} 
+        <RepPollBar
+          rep={selectedRep}
+          repPolls={repPolls}
           onBreakdown={() => {
             setSelectedPoll(selectedRep);
             setShowPollBreakdown(true);
-          }} 
+          }}
         />
 
         {/* Cast Your Vote */}
@@ -753,7 +992,13 @@ const RepModal: React.FC<{
 function App() {
    // ====================== STATE ======================
      const [showLocalModal, setShowLocalModal] = useState(false);
-  const [localOfficials, setLocalOfficials] = useState([]);
+  const [localOfficials, setLocalOfficials] = useState<any[]>([]);
+  const [localReps, setLocalReps] = useState<Rep[]>([]);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localSubTab, setLocalSubTab] = useState<'all' | 'county' | 'judges' | 'school' | 'sheriff'>('all');
+  const [localStreet, setLocalStreet] = useState('');
+  const [localCity, setLocalCity] = useState('');
+  const [localStateCode, setLocalStateCode] = useState('');
    const [pollVotes, setPollVotes] = useState<{ [pollId: string]: { [option: string]: number } }>({});
    const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
@@ -775,7 +1020,7 @@ function App() {
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [stateCode, setStateCode] = useState('');
-  const [activeTab, setActiveTab] = useState<'federal' | 'state' | 'international' | 'spending' | 'all' | 'local'>('federal');
+  const [activeTab, setActiveTab] = useState<'federal' | 'state' | 'local' | 'international' | 'spending' | 'all' | 'supreme'>('federal');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPollBreakdown, setShowPollBreakdown] = useState(false);
@@ -989,15 +1234,14 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         }
       }
 
-      // Hardcoded top federal officials (always show these)
+            // Hardcoded top federal officials (President, VP, Cabinet - NO Supreme Court here anymore)
       const federalOfficials: Rep[] = [
         { name: 'Donald Trump', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg', level: 'President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 75, id: 'president', xHandle: '@realDonaldTrump' },
         { name: 'JD Vance', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/JD_Vance_official_portrait.jpg/800px-JD_Vance_official_portrait.jpg', level: 'Vice President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 72, id: 'vice-president', xHandle: '@JDVance' },
-        { name: 'John G. Roberts, Jr.', party: 'Chief Justice', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Official_roberts_cjr.jpg/800px-Official_roberts_cjr.jpg', level: 'Supreme Court', contact: 'https://www.supremecourt.gov/contact/contactus.aspx', phone: '(202) 479-3000', score: 85, id: 'scotus-roberts', xHandle: '' },
       ];
 
       allReps.unshift(...federalOfficials);
-      setReps(allReps);
+      allReps.push(...supremeCourtJustices);
 
          // ====================== DEDUPLICATE REPS (fixes duplicates) ======================
       const seen = new Set();
@@ -1031,16 +1275,28 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       earmarks: []
     });
 
-    const isTopOfficial = rep.id?.startsWith('president') || 
-                         rep.id?.startsWith('vice-president') || 
-                         rep.id?.startsWith('scotus-') || 
+    const isTopOfficial = rep.id?.startsWith('president') ||
+                         rep.id?.startsWith('vice-president') ||
+                         rep.id?.startsWith('scotus-') ||
                          rep.id?.startsWith('cabinet-');
+    const isLocal = rep.id?.startsWith('local-');
+
+    if (isLocal) {
+      setRepDetails({
+        bio: `${rep.name} serves as ${rep.party || rep.level}. Local voting records are not available through the Congress API. Use the contact info above to reach their office directly.`,
+        votes: [],
+        bills: [],
+        comments: [],
+        earmarks: []
+      });
+      return;
+    }
 
     if (isTopOfficial) {
       setRepDetails({
         bio: `${rep.name} is a high-level federal official. Detailed voting records and sponsored bills are not available through standard congressional APIs at this time.`,
         votes: ['Detailed voting history coming soon'],
-        bills: ['Sponsored legislation coming soon'],
+        bills: [{ title: 'Sponsored legislation coming soon' }],
         comments: [],
         earmarks: ['Earmark tracking coming soon']
       });
@@ -1069,24 +1325,43 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
       const data = await res.json();
 
-      const bills = data.bills?.slice(0, 6).map((b: any) => 
-        `${b.title || b.shortTitle || 'Bill'} (${b.congress || ''})`
-      ) || ['Recent sponsored bills coming soon'];
+      // Build bio from Congress.gov member details
+      const m = data.member;
+      let bio = 'No biography available.';
+      if (m) {
+        const name = m.directOrderName || m.invertedOrderName || rep.name;
+        const party = m.partyName || rep.party;
+        const state = m.state || '';
+        const birth = m.birthYear ? ` Born ${m.birthYear}.` : '';
+        const termCount = Array.isArray(m.terms?.item) ? m.terms.item.length : (m.terms ? 1 : 0);
+        const termsStr = termCount > 0 ? ` Served ${termCount} term${termCount !== 1 ? 's' : ''} in Congress.` : '';
+        bio = `${name} is a ${party} representing ${state}.${birth}${termsStr}`;
+      }
+
+      const bills: BillItem[] = (data.bills || []).slice(0, 6).map((b: any) => ({
+        title: b.title || b.shortTitle || 'Untitled Bill',
+        latestAction: b.latestAction || null,
+        congressUrl: b.congressUrl || null,
+      }));
+
+      const votes: string[] = (data.cosponsoredBills || []).slice(0, 8).map((b: any) =>
+        `Co-sponsored: ${b.title}${b.latestAction ? ` — ${b.latestAction}` : ''}`
+      );
 
       setRepDetails({
-        bio: 'Official biographical details and full voting history are being integrated from public congressional sources. More complete profiles coming soon.',
-        votes: ['Recent vote positions coming soon'],
-        bills: bills,
-        comments: ['Public comments and constituent feedback features coming in future updates'],
-        earmarks: ['Earmark and spending transparency tools coming soon']
+        bio,
+        votes: votes.length > 0 ? votes : ['Recent voting records coming soon'],
+        bills: bills.length > 0 ? bills : [{ title: 'No recent sponsored bills found.' }],
+        comments: [],
+        earmarks: ['Earmark data integration coming soon — check back later.']
       });
 
     } catch (err) {
       console.error('Congress.gov fetch failed:', err);
       setRepDetails({
-        bio: 'We are actively integrating more public data sources (Congress.gov and others) to bring you richer bios, bills, and voting records. This feature is coming soon.',
+        bio: 'Could not load representative data. Please try again.',
         votes: ['Detailed voting records coming soon'],
-        bills: ['Sponsored bills coming soon'],
+        bills: [{ title: 'Sponsored bills coming soon' }],
         comments: [],
         earmarks: ['Earmark tracking coming soon']
       });
@@ -1198,35 +1473,72 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
   };
 
   
-     const fetchLocalOfficials = async (fullAddress: string) => {
+     const categorizeLocalOfficial = (title: string, districtType: string): { category: 'county' | 'judges' | 'school' | 'sheriff'; level: string } => {
+    const t = (title || '').toUpperCase();
+    const d = (districtType || '').toUpperCase();
+    if (t.includes('SHERIFF') || d.includes('SHERIFF')) return { category: 'sheriff', level: 'Sheriff' };
+    if (t.includes('JUDGE') || t.includes('JUSTICE') || t.includes('MAGISTRATE') || d.includes('JUDICIAL')) return { category: 'judges', level: 'Judge' };
+    if (t.includes('SCHOOL') || d.includes('SCHOOL')) return { category: 'school', level: 'School Board' };
+    return { category: 'county', level: 'County Official' };
+  };
+
+  const fetchLocalOfficials = async (fullAddress: string) => {
     const ciceroKey = process.env.REACT_APP_CICERO_API_KEY;
     if (!ciceroKey) {
       alert('Cicero API key is not configured');
       return;
     }
 
+    setLocalLoading(true);
     try {
-      // Using a public CORS proxy for development only
       const proxy = 'https://corsproxy.io/?';
+      // Filter Cicero results to non-legislative local offices
       const url = `https://app.cicerodata.com/v3.1/official/?address=${encodeURIComponent(fullAddress)}&format=json&key=${ciceroKey}`;
-      
       const res = await fetch(proxy + encodeURIComponent(url));
-      
-      if (!res.ok) {
-        throw new Error(`Cicero returned ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Cicero returned ${res.status}`);
 
       const data = await res.json();
-      setLocalOfficials(data.officials || []);
-      
-      if (data.officials && data.officials.length > 0) {
-        console.log('Local officials loaded:', data.officials.length);
-      } else {
+      const officials: any[] =
+        data?.response?.results?.candidates?.[0]?.officials ||
+        data?.response?.results?.officials ||
+        data?.officials ||
+        [];
+
+      const mapped: Rep[] = officials.map((o: any) => {
+        const office = o.office || {};
+        const district = office.district || {};
+        const title = office.title || '';
+        const districtType = district.district_type || '';
+        const { level } = categorizeLocalOfficial(title, districtType);
+        const phone = (o.addresses && o.addresses[0] && (o.addresses[0].phone_1 || o.addresses[0].phone_2)) || '';
+        const url = (o.urls && o.urls[0]) || '';
+        const fullName = [o.first_name, o.middle_initial, o.last_name].filter(Boolean).join(' ').trim();
+        return {
+          name: fullName || 'Unknown',
+          party: o.party || title || 'Local',
+          photo: o.photo_origin_url || 'https://placehold.co/100x100?text=Local',
+          level,
+          contact: url,
+          phone,
+          score: Math.floor(Math.random() * 101),
+          id: 'local-' + (o.id || `${fullName}-${title}`),
+          xHandle: ''
+        };
+      });
+
+      setLocalOfficials(officials);
+      setLocalReps(mapped);
+
+      if (mapped.length === 0) {
         alert('No local officials found for this address.');
+      } else {
+        console.log(`Local officials loaded: ${mapped.length}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error('fetchLocalOfficials error:', err);
       alert('Failed to load local officials. Please try again later.');
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -1556,7 +1868,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
           </div>
         </div>
 
-        {/* Main Tabs */}
+               {/* Main Tabs - Now includes Supreme Court */}
         <div className="main-tabs">
           <button className={activeTab === 'federal' ? 'active' : ''} onClick={() => setActiveTab('federal')}>
             Federal
@@ -1566,6 +1878,9 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
           </button>
           <button className={activeTab === 'local' ? 'active' : ''} onClick={() => setActiveTab('local')}>
             Local
+          </button>
+          <button className={activeTab === 'supreme' ? 'active' : ''} onClick={() => setActiveTab('supreme')}>
+            Supreme Court
           </button>
           <button className={activeTab === 'international' ? 'active' : ''} onClick={() => setActiveTab('international')}>
             International
@@ -1579,7 +1894,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         </div>
 
         {/* Reps Grid */}
-        {reps.length > 0 && (activeTab === 'federal' || activeTab === 'state' || activeTab === 'all') && (
+        {reps.length > 0 && (
           <div className="reps-section">
             <p className="county-banner">Your County: {county || 'Unknown'}</p>
             
@@ -1587,7 +1902,8 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
               {reps
                 .filter((rep) => {
                   if (activeTab === 'federal') {
-                    return ['President', 'Vice President', 'Supreme Court', 'U.S. Senator', 'U.S. Representative'].some(level => 
+                    // Exclude Supreme Court from Federal tab
+                    return ['President', 'Vice President', 'U.S. Senator', 'U.S. Representative'].some(level => 
                       rep.level.includes(level)
                     );
                   }
@@ -1596,7 +1912,13 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                            rep.level.includes('State Senate') ||
                            rep.level.toLowerCase().includes('state');
                   }
-                  return true;
+                  if (activeTab === 'supreme') {
+                    return rep.level === 'Supreme Court';
+                  }
+                  if (activeTab === 'all') {
+                    return true;
+                  }
+                  return false;
                 })
                 .map((rep, i) => {
                   const repResults = repPolls[rep.name] || {};
@@ -1634,42 +1956,132 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                 })}
             </div>
 
-            {/* Local Officials Button */}
-            <button 
-              onClick={() => setShowLocalModal(true)}
-              style={{ 
-                marginTop: '25px', 
-                padding: '14px 28px', 
-                backgroundColor: '#28a745', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '8px', 
-                fontSize: '16px',
-                width: '100%',
-                maxWidth: '340px',
-                display: 'block',
-                marginLeft: 'auto',
-                marginRight: 'auto'
-              }}
-            >
-              Show My Local Officials
-            </button>
+            {/* Local Tab Content - Cicero API lookup by full address */}
+            {activeTab === 'local' && (
+              <div style={{ marginTop: '30px' }}>
+                <h3 style={{ textAlign: 'center' }}>Find Local Officials</h3>
+                <p style={{ color: '#666', textAlign: 'center', marginBottom: '15px' }}>
+                  Enter a full address to look up County Officials, Judges, School Board, and Sheriff.
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
+                  <input
+                    type="text"
+                    placeholder="Street address"
+                    value={localStreet}
+                    onChange={(e) => setLocalStreet(e.target.value)}
+                    style={{ padding: '8px', minWidth: '220px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={localCity}
+                    onChange={(e) => setLocalCity(e.target.value)}
+                    style={{ padding: '8px', minWidth: '140px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="State (e.g. VA)"
+                    value={localStateCode}
+                    onChange={(e) => setLocalStateCode(e.target.value.toUpperCase())}
+                    maxLength={2}
+                    style={{ padding: '8px', width: '80px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                  <button
+                    onClick={() => {
+                      const addr = `${localStreet}, ${localCity}, ${localStateCode}`.trim();
+                      if (!localStreet || !localCity || !localStateCode) {
+                        alert('Please fill in street, city, and state.');
+                        return;
+                      }
+                      fetchLocalOfficials(addr);
+                    }}
+                    disabled={localLoading}
+                    style={{ padding: '8px 16px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                  >
+                    {localLoading ? 'Loading...' : 'Find Local Officials'}
+                  </button>
+                </div>
+
+                {localReps.length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
+                      {([
+                        { key: 'all', label: 'All' },
+                        { key: 'county', label: 'County Officials' },
+                        { key: 'judges', label: 'Judges' },
+                        { key: 'school', label: 'School Board' },
+                        { key: 'sheriff', label: 'Sheriff' },
+                      ] as const).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => setLocalSubTab(t.key)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            border: '1px solid #1976d2',
+                            background: localSubTab === t.key ? '#1976d2' : '#fff',
+                            color: localSubTab === t.key ? '#fff' : '#1976d2',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          {t.label} {t.key !== 'all' && `(${localReps.filter(r => {
+                            if (t.key === 'county') return r.level === 'County Official';
+                            if (t.key === 'judges') return r.level === 'Judge';
+                            if (t.key === 'school') return r.level === 'School Board';
+                            if (t.key === 'sheriff') return r.level === 'Sheriff';
+                            return false;
+                          }).length})`}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="reps-grid">
+                      {localReps
+                        .filter(rep => {
+                          if (localSubTab === 'all') return true;
+                          if (localSubTab === 'county') return rep.level === 'County Official';
+                          if (localSubTab === 'judges') return rep.level === 'Judge';
+                          if (localSubTab === 'school') return rep.level === 'School Board';
+                          if (localSubTab === 'sheriff') return rep.level === 'Sheriff';
+                          return false;
+                        })
+                        .map((rep, i) => (
+                          <div
+                            key={rep.id + '-' + i}
+                            className="rep-card"
+                            onClick={() => fetchRepDetails(rep)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <img
+                              src={rep.photo || 'https://placehold.co/100x100?text=Local'}
+                              alt={rep.name}
+                              style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Local'; }}
+                            />
+                            <h4>{rep.name}</h4>
+                            <p><strong>Office:</strong> {rep.party}</p>
+                            <p><strong>Level:</strong> {rep.level}</p>
+                            {rep.phone && <p><strong>Phone:</strong> {rep.phone}</p>}
+                          </div>
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Spending Tab */}
+                {/* Spending Tab */}
         {activeTab === 'spending' && (
           <div className="spending-section">
             <h2>Government Spending Tracker</h2>
-            <p>Live view of proposed federal spending bills and earmarks</p>
-            <div className="spending-list">
-              <div className="spending-item">
-                <h3>H.R. 1234 - Infrastructure Investment Act</h3>
-                <p>Proposed: $1.2 trillion</p>
-                <p>Status: Passed House</p>
-                <p>Earmarks: 142 projects ($45B)</p>
-              </div>
-            </div>
+            <p>Real-time federal spending bills and earmarks are being integrated.</p>
+            <p style={{ color: '#666', fontStyle: 'italic', marginTop: '20px' }}>
+              This feature is coming soon in this live beta version.
+            </p>
           </div>
         )}
 
