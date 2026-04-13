@@ -1051,13 +1051,12 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
       const bioguideId = rep.id;
 
-      // Reliable CORS proxy for both local and live
+      // allorigins.win blocks custom headers, so pass the API key as a query param instead
       const proxy = 'https://api.allorigins.win/raw?url=';
-      const url = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json`;
+      const apiKeyParam = congressKey ? `&api_key=${congressKey}` : '';
+      const url = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json${apiKeyParam}`;
 
-      const res = await fetch(proxy + encodeURIComponent(url), {
-        headers: congressKey ? { 'X-API-Key': congressKey } : {}
-      });
+      const res = await fetch(proxy + encodeURIComponent(url));
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
