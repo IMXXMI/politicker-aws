@@ -1018,7 +1018,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       setLoading(false);
     }
   };
-   const fetchRepDetails = async (rep: Rep) => {
+           const fetchRepDetails = async (rep: Rep) => {
     console.log('Fetching details for rep:', rep.name);
     setSelectedRep(rep);
     setShowRepModal(true);
@@ -1031,7 +1031,6 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       earmarks: []
     });
 
-    // Top officials (President, VP, Supreme Court, Cabinet) don't have standard congressional records
     const isTopOfficial = rep.id?.startsWith('president') || 
                          rep.id?.startsWith('vice-president') || 
                          rep.id?.startsWith('scotus-') || 
@@ -1039,36 +1038,37 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
     if (isTopOfficial) {
       setRepDetails({
-        bio: `${rep.name} is a high-level federal official. Detailed voting records and sponsored bills for top executive and judicial positions are not available through standard congressional APIs at this time.`,
+        bio: `${rep.name} is a high-level federal official. Detailed voting records and sponsored bills are not available through standard congressional APIs at this time.`,
         votes: ['Detailed voting history coming soon'],
-        bills: ['Sponsored legislation data coming soon'],
+        bills: ['Sponsored legislation coming soon'],
         comments: [],
         earmarks: ['Earmark tracking coming soon']
       });
       return;
     }
 
-    const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
-
     try {
-      let bioguideId = rep.id;
+      const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
+      const bioguideId = rep.id;
 
-      // Recent bills endpoint from Congress.gov
-      let bills: string[] = ['Recent sponsored bills coming soon'];
+      // More reliable CORS proxy for local development
+      const proxy = window.location.hostname === 'localhost' 
+        ? 'https://api.allorigins.win/raw?url=' 
+        : '';
 
-      if (bioguideId && bioguideId.length > 5 && congressKey) {
-        const billsRes = await fetch(
-          `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=5&sort=latestActionDate&format=json`,
-          { headers: { 'X-API-Key': congressKey } }
-        );
+      const url = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json`;
 
-        if (billsRes.ok) {
-          const billsData = await billsRes.json();
-          bills = billsData.bills?.slice(0, 5).map((b: any) => 
-            `${b.title || b.shortTitle} (${b.congress})`
-          ) || bills;
-        }
-      }
+      const res = await fetch(proxy + encodeURIComponent(url), {
+        headers: congressKey ? { 'X-API-Key': congressKey } : {}
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      const bills = data.bills?.slice(0, 6).map((b: any) => 
+        `${b.title || b.shortTitle || 'Bill'} (${b.congress || ''})`
+      ) || ['Recent sponsored bills coming soon'];
 
       setRepDetails({
         bio: 'Official biographical details and full voting history are being integrated from public congressional sources. More complete profiles coming soon.',
