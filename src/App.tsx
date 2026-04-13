@@ -1049,14 +1049,21 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
     try {
       const congressKey = process.env.REACT_APP_CONGRESS_API_KEY;
+      const proxyBase = process.env.REACT_APP_CONGRESS_PROXY_URL;
       const bioguideId = rep.id;
 
-      // allorigins.win blocks custom headers, so pass the API key as a query param instead
-      const proxy = 'https://api.allorigins.win/raw?url=';
-      const apiKeyParam = congressKey ? `&api_key=${congressKey}` : '';
-      const url = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json${apiKeyParam}`;
+      let fetchUrl: string;
+      if (proxyBase) {
+        // Use our own Lambda proxy — no API key exposed in the browser
+        fetchUrl = `${proxyBase}?bioguideId=${encodeURIComponent(bioguideId)}`;
+      } else {
+        // Fallback: public CORS proxy with key in URL
+        const apiKeyParam = congressKey ? `&api_key=${congressKey}` : '';
+        const target = `https://api.congress.gov/v3/member/${bioguideId}/bills?limit=6&sort=latestActionDate&format=json${apiKeyParam}`;
+        fetchUrl = `https://corsproxy.io/?${encodeURIComponent(target)}`;
+      }
 
-      const res = await fetch(proxy + encodeURIComponent(url));
+      const res = await fetch(fetchUrl);
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
