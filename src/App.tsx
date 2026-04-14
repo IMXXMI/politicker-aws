@@ -24,6 +24,7 @@ import {
   getDoc      // ← For memberVotes on-demand fetch
 } from 'firebase/firestore';
 import './App.css';
+import { useEarmarks } from './hooks/useEarmarks';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -1228,6 +1229,71 @@ const DistrictSpending: React.FC<{ stateCode: string; districtNumber?: number; c
   );
 };
 
+// ====================== REP EARMARKS (Firestore via earmarksQuery Lambda) ======================
+const RepEarmarks: React.FC<{ repName: string }> = ({ repName }) => {
+  // Use last name as filter — matches against memberNameLower prefix across varying CPF name formats
+  const lastName = repName.split(' ').slice(-1)[0].toLowerCase();
+  const { earmarks, loading, error, hasMore, loadMore } = useEarmarks({ member: lastName, limit: 10 });
+
+  const fmt = (n: number | null) => {
+    if (n == null) return '—';
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+    if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+    return `$${n.toLocaleString()}`;
+  };
+
+  return (
+    <div style={{ marginTop: '25px' }}>
+      <h3>Earmarks / Community Project Funding</h3>
+      {loading && earmarks.length === 0 ? (
+        <p style={{ fontStyle: 'italic', color: '#777' }}>Loading earmarks…</p>
+      ) : error ? (
+        <p style={{ color: '#c00', fontSize: '13px' }}>{error}</p>
+      ) : earmarks.length === 0 ? (
+        <p style={{ fontStyle: 'italic', color: '#777' }}>No CPF earmarks on file for {repName}.</p>
+      ) : (
+        <div style={{ border: '1px solid #eee', borderRadius: '8px', padding: '10px' }}>
+          <p style={{ fontSize: '12px', color: '#666', fontStyle: 'italic', margin: '0 0 10px' }}>
+            Source: House Appropriations Committee CPF disclosures. Filtered to rows matching &quot;{lastName}&quot;.
+          </p>
+          {earmarks.map((e, i) => (
+            <div key={e.id || i} style={{ padding: '10px 12px', marginBottom: '6px', background: '#f9f9f9', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <strong style={{ flex: 1, fontSize: '14px' }}>{e.projectTitle || 'Untitled project'}</strong>
+                <span style={{ color: '#059669', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {fmt(e.amount_enacted ?? e.amount_requested)}
+                </span>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#555' }}>
+                FY{e.fiscalYear} &middot; {e.state}{e.district ? `-${e.district}` : ''} &middot; {e.memberName}
+              </p>
+              {e.recipientName && (
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#666' }}>
+                  Recipient: {e.recipientName}
+                </p>
+              )}
+              {e.agency && (
+                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#999' }}>
+                  Agency: {e.agency}
+                </p>
+              )}
+            </div>
+          ))}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              style={{ marginTop: '8px', padding: '6px 12px', fontSize: '12px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              {loading ? 'Loading…' : 'Load more'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ====================== TOP DONORS (FEC OpenFEC API, on-demand via button) ======================
 const TopDonors: React.FC<{ repName: string; chamber: 'house' | 'senate'; stateCode?: string }> = ({ repName, chamber, stateCode }) => {
   const [employers, setEmployers] = useState<any[] | null>(null);
@@ -1964,6 +2030,11 @@ const RepModal: React.FC<{
           />
         )}
 
+        {/* House CPF earmarks — Representatives only (CPF is a House program) */}
+        {selectedRep.level === 'U.S. Representative' && (
+          <RepEarmarks repName={selectedRep.name} />
+        )}
+
         {/* Earmarks (separated) */}
         <div style={{ marginTop: '30px' }}>
           <h3>Earmarks</h3>
@@ -2050,6 +2121,8 @@ function App() {
    const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
   const [officialSearch, setOfficialSearch] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchDidRun, setSearchDidRun] = useState(false);
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null);
   const [repDetails, setRepDetails] = useState<RepDetails>({ bio: '', votes: [], bills: [], comments: [] });
   const [showRepModal, setShowRepModal] = useState(false);
@@ -2140,6 +2213,19 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
     if (saved) {
       setCustomPollVotes(JSON.parse(saved));
     }
+  }, []);
+
+  // Seed reps with hardcoded national officials on mount so the Search box is useful before a ZIP lookup
+  useEffect(() => {
+    setReps((prev) => {
+      if (prev.length > 0) return prev;
+      return [
+        { name: 'Donald Trump', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg', level: 'President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'president', xHandle: '@realDonaldTrump' },
+        { name: 'JD Vance', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/JD_Vance_official_portrait.jpg/800px-JD_Vance_official_portrait.jpg', level: 'Vice President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'vice-president', xHandle: '@JDVance' },
+        ...supremeCourtJustices,
+        ...Object.values(stateGovernors),
+      ];
+    });
   }, []);
 
   // Live upcoming floor-vote schedule (populated daily by the floorScheduleScraper Lambda)
@@ -2341,6 +2427,96 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
       setLoading(false);
     }
   };
+  // Live search: hits OpenStates (state legislators) + CourtListener (federal judges) and injects matches into reps
+  const runOfficialSearch = async () => {
+    const q = officialSearch.trim();
+    if (q.length < 2) return;
+    setSearchLoading(true);
+    setSearchDidRun(true);
+    const newReps: Rep[] = [];
+
+    // OpenStates: state legislators nationwide by name
+    const openstatesKey = process.env.REACT_APP_OPENSTATES_API_KEY;
+    if (openstatesKey) {
+      try {
+        const url = `https://v3.openstates.org/people?name=${encodeURIComponent(q)}&per_page=20&apikey=${encodeURIComponent(openstatesKey)}`;
+        const r = await fetch(url);
+        if (r.ok) {
+          const data = await r.json();
+          for (const p of data.results || []) {
+            const role = p.current_role || {};
+            const isSenator = (role.title || '').toLowerCase().includes('senator');
+            newReps.push({
+              name: p.name || [p.given_name, p.family_name].filter(Boolean).join(' '),
+              party: p.party || 'Unknown',
+              photo: p.image || 'https://placehold.co/100x100?text=Leg',
+              level: isSenator ? 'State Senate' : 'State House',
+              contact: '',
+              phone: '',
+              score: 0,
+              id: p.id || `openstates-${p.name}`,
+              xHandle: '',
+            });
+          }
+        } else {
+          console.warn('OpenStates search returned', r.status);
+        }
+      } catch (e) {
+        console.warn('OpenStates search failed:', e);
+      }
+    }
+
+    // CourtListener: federal judges nationwide by last name
+    try {
+      const lastName = q.split(' ').slice(-1)[0];
+      const url = `https://www.courtlistener.com/api/rest/v4/people/?name_last__istartswith=${encodeURIComponent(lastName)}&page_size=15`;
+      const r = await fetch(url);
+      if (r.ok) {
+        const data = await r.json();
+        for (const p of data.results || []) {
+          const fullName = [p.name_first, p.name_middle, p.name_last].filter(Boolean).join(' ').trim();
+          if (!fullName.toLowerCase().includes(q.toLowerCase())) continue;
+          newReps.push({
+            name: fullName,
+            party: 'Federal Judge',
+            photo: 'https://placehold.co/100x100?text=Judge',
+            level: 'Federal Judge',
+            contact: p.absolute_url ? `https://www.courtlistener.com${p.absolute_url}` : '',
+            phone: '',
+            score: 0,
+            id: 'local-judge-' + p.id,
+            xHandle: '',
+            judgeInfo: { courtId: '', personId: p.id },
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('CourtListener search failed:', e);
+    }
+
+    // Merge into reps, deduping by name+level (same person can have different IDs across sources)
+    if (newReps.length > 0) {
+      setReps((prev) => {
+        const keyOf = (r: Rep) => `${r.name.toLowerCase().trim()}|${(r.level || '').toLowerCase().trim()}`;
+        const seen = new Set<string>();
+        const out: Rep[] = [];
+        for (const r of prev) {
+          const k = keyOf(r);
+          if (seen.has(k)) continue;
+          seen.add(k); out.push(r);
+        }
+        for (const r of newReps) {
+          const k = keyOf(r);
+          if (seen.has(k)) continue;
+          seen.add(k); out.push(r);
+        }
+        return out;
+      });
+    }
+    setSearchLoading(false);
+    console.log(`Official search "${q}" → fetched ${newReps.length} new reps`);
+  };
+
            const fetchRepDetails = async (rep: Rep) => {
     console.log('Fetching details for rep:', rep.name);
     setSelectedRep(rep);
@@ -3300,35 +3476,64 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
                             <main style={{ padding: '20px 15px' }}>
         
-        {/* Search Officials — works against currently loaded reps; auto-seeds national officials so it's useful even before a ZIP lookup */}
-        <div style={{ maxWidth: '420px', margin: '0 auto 12px auto' }}>
-          <input
-            type="text"
-            placeholder="🔍 Search officials by name (e.g. Roberts, Spanberger, Wittman)"
-            value={officialSearch}
-            onChange={(e) => {
-              const v = e.target.value;
-              setOfficialSearch(v);
-              // Lazy-seed reps with hardcoded national officials so search works pre-ZIP
-              if (v && reps.length === 0) {
-                const seed: Rep[] = [
-                  { name: 'Donald Trump', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg', level: 'President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'president', xHandle: '@realDonaldTrump' },
-                  { name: 'JD Vance', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/JD_Vance_official_portrait.jpg/800px-JD_Vance_official_portrait.jpg', level: 'Vice President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'vice-president', xHandle: '@JDVance' },
-                  ...supremeCourtJustices,
-                  ...Object.values(stateGovernors),
-                ];
-                setReps(seed);
-              }
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              fontSize: '14px',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              boxSizing: 'border-box'
-            }}
-          />
+        {/* Search Officials — Enter triggers a live search across OpenStates + CourtListener; results injected into reps */}
+        <div style={{ maxWidth: '500px', margin: '0 auto 12px auto' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="🔍 Search any official — press Enter"
+              value={officialSearch}
+              onChange={(e) => setOfficialSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') runOfficialSearch(); }}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '14px',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              onClick={runOfficialSearch}
+              disabled={searchLoading || officialSearch.trim().length < 2}
+              style={{
+                padding: '8px 14px',
+                fontSize: '13px',
+                backgroundColor: '#007BFF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {searchLoading ? '…' : 'Enter'}
+            </button>
+            {officialSearch && (
+              <button
+                onClick={() => { setOfficialSearch(''); setSearchDidRun(false); }}
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {searchDidRun && officialSearch.trim() && (
+            <p style={{ fontSize: '12px', color: '#666', margin: '6px 0 0', textAlign: 'center' }}>
+              Showing {reps.filter(r => r.name.toLowerCase().includes(officialSearch.trim().toLowerCase())).length} match(es)
+              {searchLoading ? ' — still searching…' : ''}
+            </p>
+          )}
         </div>
 
         {/* Compact ZIP Input — shrunk ~25% */}
@@ -3402,7 +3607,7 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         {/* Reps Grid */}
         {reps.length > 0 && (
           <div className="reps-section">
-            <p className="county-banner">Your County: {county || 'Unknown'}</p>
+            {county && <p className="county-banner">Your County: {county}</p>}
             
             <div className="reps-grid">
               {reps

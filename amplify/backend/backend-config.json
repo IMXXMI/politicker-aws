@@ -36,6 +36,18 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
+    "earmarksIngest": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "earmarksQuery": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "floorScheduleScraper": {
       "build": true,
       "dependsOn": [],
@@ -95,6 +107,54 @@
         {
           "category": "function",
           "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksIngest_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksIngest"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksIngest_firebaseServiceAccountBase64": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksIngest"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksIngest_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksIngest"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksQuery_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksQuery"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksQuery_firebaseServiceAccountBase64": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksQuery"
+        }
+      ]
+    },
+    "AMPLIFY_function_earmarksQuery_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "earmarksQuery"
         }
       ]
     },

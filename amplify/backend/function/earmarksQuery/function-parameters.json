@@ -1,0 +1,9 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "firebaseServiceAccountBase64",
+      "environmentVariableName": "FIREBASE_SERVICE_ACCOUNT_BASE64"
+    }
+  ]
+}

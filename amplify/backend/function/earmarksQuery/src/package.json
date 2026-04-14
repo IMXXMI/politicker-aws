@@ -1,0 +1,13 @@
+{
+  "name": "earmarksquery",
+  "version": "1.0.0",
+  "description": "HTTP query endpoint for the earmarks Firestore collection. Fronted by a Lambda Function URL.",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92"
+  }
+}

@@ -55,9 +55,19 @@
         "politicker": {},
         "floorScheduleScraper": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/floorScheduleScraper-396a577966304e312f4c-build.zip",
+          "s3Key": "amplify-builds/floorScheduleScraper-6e2b4851367664436b68-build.zip",
           "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
           "firebaseServiceAccountBase64": " \"type\": \"service_account\","
+        },
+        "earmarksIngest": {
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "firebaseServiceAccountBase64": "placeholder",
+          "s3Key": "amplify-builds/earmarksIngest-6753586566514c4e4e34-build.zip"
+        },
+        "earmarksQuery": {
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "firebaseServiceAccountBase64": "placeholder",
+          "s3Key": "amplify-builds/earmarksQuery-56357345513949764a51-build.zip"
         }
       },
       "api": {
