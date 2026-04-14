@@ -16,10 +16,7 @@
     "s3Key": {
       "Type": "String"
     },
-    "geocodioApiKey": {
-      "Type": "String"
-    },
-    "congressApiKey": {
+    "ciceroApiKey": {
       "Type": "String"
     },
     "apipolitickerGraphQLAPIIdOutput": {
@@ -35,6 +32,12 @@
       "Default": "apipolitickerGraphQLAPIKeyOutput"
     },
     "secretsPathAmplifyAppId": {
+      "Type": "String"
+    },
+    "geocodioApiKey": {
+      "Type": "String"
+    },
+    "congressApiKey": {
       "Type": "String"
     }
   },
@@ -100,11 +103,8 @@
             "API_POLITICKER_GRAPHQLAPIKEYOUTPUT": {
               "Ref": "apipolitickerGraphQLAPIKeyOutput"
             },
-            "GEOCODIO_API_KEY": {
-              "Ref": "geocodioApiKey"
-            },
-            "CONGRESS_API_KEY": {
-              "Ref": "congressApiKey"
+            "CICERO_API_KEY": {
+              "Ref": "ciceroApiKey"
             },
             "twitter_bearer": {
               "Fn::Join": [
@@ -127,6 +127,12 @@
                   "twitter_bearer"
                 ]
               ]
+            },
+            "GEOCODIO_API_KEY": {
+              "Ref": "geocodioApiKey"
+            },
+            "CONGRESS_API_KEY": {
+              "Ref": "congressApiKey"
             }
           }
         },

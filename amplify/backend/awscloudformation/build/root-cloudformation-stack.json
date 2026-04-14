@@ -218,11 +218,12 @@
       "Properties": {
         "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/apiProxy-cloudformation-template.json",
         "Parameters": {
-          "geocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
-          "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
           "secretsPathAmplifyAppId": "duly49kc98uca",
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/apiProxy-666652696d7636735851-build.zip",
+          "s3Key": "amplify-builds/apiProxy-634836645670616e7a6f-build.zip",
+          "geocodioApiKey": "68395a53965695aa585817a6713cc617a7a65c6",
+          "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
+          "ciceroApiKey": "f6c0140f86d9cbefbce80d9e6c2be5022fafbd6c",
           "apipolitickerGraphQLAPIIdOutput": {
             "Fn::GetAtt": [
               "apipoliticker",
@@ -245,14 +246,16 @@
         }
       }
     },
-    "functionCiceroProxy": {
+    "functionfloorScheduleScraper": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/CiceroProxy-cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/floorScheduleScraper-cloudformation-template.json",
         "Parameters": {
-          "ciceroApiKey": "15c50538dd613eca2b3b32c3f55b4641652dfdb1",
+          "CloudWatchRule": "cron(0 6 * * ? *)",
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/CiceroProxy-6b385a74546d5a6d3646-build.zip",
+          "s3Key": "amplify-builds/floorScheduleScraper-396a577966304e312f4c-build.zip",
+          "firebaseServiceAccountBase64": " ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAicG9saXRpY2tlcmFw",
+          "congressApiKey": "z3fcHlaLox1LIY2KFMSdhtSK4XtX7QOULfWLKR0t",
           "env": "awsapp"
         }
       }

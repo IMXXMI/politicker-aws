@@ -1,7 +1,11 @@
 /**
- * Congress.gov member proxy.
- * Returns bio, sponsored bills (with URLs + latest action), and cosponsored bills.
- * GET /?bioguideId=W000804
+ * Multi-service API proxy.
+ *
+ * Routes:
+ *   ?service=congress&bioguideId=W000804  → Congress.gov member info/bills
+ *   ?service=cicero&address=...            → Cicero local officials lookup
+ *
+ * Default (no service param) = congress (backwards compatible).
  *
  * CORS headers are set by the Lambda Function URL config — do NOT duplicate them here.
  */
@@ -43,16 +47,17 @@ function shapeBill(b) {
   };
 }
 
-exports.handler = async (event) => {
-  const { bioguideId } = event.queryStringParameters || {};
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  };
+}
 
-  if (!bioguideId) {
-    return {
-      statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'bioguideId is required' }),
-    };
-  }
+async function handleCongress(params) {
+  const { bioguideId } = params;
+  if (!bioguideId) return json(400, { error: 'bioguideId is required' });
 
   const apiKey = process.env.CONGRESS_API_KEY;
   const q = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : '';
@@ -77,21 +82,48 @@ exports.handler = async (event) => {
       latestAction: formatAction(b.latestAction),
     }));
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        member: memberData.member || null,
-        bills,
-        cosponsoredBills,
-      }),
-    };
+    return json(200, {
+      member: memberData.member || null,
+      bills,
+      cosponsoredBills,
+    });
   } catch (err) {
     console.error('Congress proxy error:', err);
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Proxy failed' }),
-    };
+    return json(500, { error: 'Proxy failed' });
+  }
+}
+
+async function handleCicero(params) {
+  const { address } = params;
+  if (!address) return json(400, { error: 'address is required' });
+
+  const apiKey = process.env.CICERO_API_KEY;
+  if (!apiKey) return json(500, { error: 'CICERO_API_KEY not configured' });
+
+  try {
+    const url = `https://app.cicerodata.com/v3.1/official/?address=${encodeURIComponent(address)}&format=json&key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('Cicero upstream error:', res.status, data);
+      return json(res.status, data);
+    }
+    return json(200, data);
+  } catch (err) {
+    console.error('Cicero proxy error:', err);
+    return json(500, { error: 'Cicero proxy failed' });
+  }
+}
+
+exports.handler = async (event) => {
+  const params = event.queryStringParameters || {};
+  const service = (params.service || 'congress').toLowerCase();
+
+  switch (service) {
+    case 'cicero':
+      return handleCicero(params);
+    case 'congress':
+    default:
+      return handleCongress(params);
   }
 };

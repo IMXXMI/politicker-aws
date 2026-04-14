@@ -20,12 +20,6 @@
     }
   },
   "function": {
-    "CiceroProxy": {
-      "build": true,
-      "dependsOn": [],
-      "providerPlugin": "awscloudformation",
-      "service": "Lambda"
-    },
     "apiProxy": {
       "build": true,
       "dependsOn": [
@@ -41,6 +35,12 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    },
+    "floorScheduleScraper": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "hosting": {
@@ -50,27 +50,11 @@
     }
   },
   "parameters": {
-    "AMPLIFY_function_CiceroProxy_ciceroApiKey": {
+    "AMPLIFY_function_apiProxy_ciceroApiKey": {
       "usedBy": [
         {
           "category": "function",
-          "resourceName": "CiceroProxy"
-        }
-      ]
-    },
-    "AMPLIFY_function_CiceroProxy_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "CiceroProxy"
-        }
-      ]
-    },
-    "AMPLIFY_function_CiceroProxy_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "CiceroProxy"
+          "resourceName": "apiProxy"
         }
       ]
     },
@@ -111,6 +95,38 @@
         {
           "category": "function",
           "resourceName": "apiProxy"
+        }
+      ]
+    },
+    "AMPLIFY_function_floorScheduleScraper_congressApiKey": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "floorScheduleScraper"
+        }
+      ]
+    },
+    "AMPLIFY_function_floorScheduleScraper_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "floorScheduleScraper"
+        }
+      ]
+    },
+    "AMPLIFY_function_floorScheduleScraper_firebaseServiceAccountBase64": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "floorScheduleScraper"
+        }
+      ]
+    },
+    "AMPLIFY_function_floorScheduleScraper_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "floorScheduleScraper"
         }
       ]
     }

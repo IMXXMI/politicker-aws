@@ -11,12 +11,20 @@
   "lambdaLayers": [],
   "environmentVariableList": [
     {
+      "cloudFormationParameterName": "ciceroApiKey",
+      "environmentVariableName": "CICERO_API_KEY"
+    },
+    {
       "cloudFormationParameterName": "geocodioApiKey",
       "environmentVariableName": "GEOCODIO_API_KEY"
     },
     {
       "cloudFormationParameterName": "congressApiKey",
       "environmentVariableName": "CONGRESS_API_KEY"
+    },
+    {
+      "cloudFormationParameterName": "ciceroApiKey",
+      "environmentVariableName": "CICERO_API_KEY"
     }
   ],
   "secretNames": [

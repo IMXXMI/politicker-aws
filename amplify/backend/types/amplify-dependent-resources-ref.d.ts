@@ -7,15 +7,16 @@ export type AmplifyDependentResourcesAttributes = {
     }
   },
   "function": {
-    "CiceroProxy": {
+    "apiProxy": {
       "Arn": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
       "Name": "string",
       "Region": "string"
     },
-    "apiProxy": {
+    "floorScheduleScraper": {
       "Arn": "string",
+      "CloudWatchEventRule": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
       "Name": "string",

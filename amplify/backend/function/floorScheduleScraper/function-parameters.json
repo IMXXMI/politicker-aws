@@ -1,0 +1,13 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "congressApiKey",
+      "environmentVariableName": "CONGRESS_API_KEY"
+    },
+    {
+      "cloudFormationParameterName": "firebaseServiceAccountBase64",
+      "environmentVariableName": "FIREBASE_SERVICE_ACCOUNT_BASE64"
+    }
+  ]
+}

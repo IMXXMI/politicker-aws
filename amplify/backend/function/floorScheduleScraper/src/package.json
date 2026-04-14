@@ -1,0 +1,13 @@
+{
+  "name": "floorschedulescraper",
+  "version": "2.0.0",
+  "description": "Scrapes House + Senate floor schedules and writes to Firestore daily.",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92"
+  }
+}
