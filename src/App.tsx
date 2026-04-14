@@ -2049,6 +2049,7 @@ function App() {
    const [pollVotes, setPollVotes] = useState<{ [pollId: string]: { [option: string]: number } }>({});
    const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
+  const [officialSearch, setOfficialSearch] = useState('');
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null);
   const [repDetails, setRepDetails] = useState<RepDetails>({ bio: '', votes: [], bills: [], comments: [] });
   const [showRepModal, setShowRepModal] = useState(false);
@@ -3299,45 +3300,76 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
 
                             <main style={{ padding: '20px 15px' }}>
         
-        {/* Compact ZIP Input */}
-        <div style={{ 
-          maxWidth: '420px', 
+        {/* Search Officials — works against currently loaded reps; auto-seeds national officials so it's useful even before a ZIP lookup */}
+        <div style={{ maxWidth: '420px', margin: '0 auto 12px auto' }}>
+          <input
+            type="text"
+            placeholder="🔍 Search officials by name (e.g. Roberts, Spanberger, Wittman)"
+            value={officialSearch}
+            onChange={(e) => {
+              const v = e.target.value;
+              setOfficialSearch(v);
+              // Lazy-seed reps with hardcoded national officials so search works pre-ZIP
+              if (v && reps.length === 0) {
+                const seed: Rep[] = [
+                  { name: 'Donald Trump', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg', level: 'President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'president', xHandle: '@realDonaldTrump' },
+                  { name: 'JD Vance', party: 'Republican', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/JD_Vance_official_portrait.jpg/800px-JD_Vance_official_portrait.jpg', level: 'Vice President', contact: 'https://www.whitehouse.gov/contact/', phone: '(202) 456-1111', score: 0, id: 'vice-president', xHandle: '@JDVance' },
+                  ...supremeCourtJustices,
+                  ...Object.values(stateGovernors),
+                ];
+                setReps(seed);
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              fontSize: '14px',
+              borderRadius: '6px',
+              border: '1px solid #ccc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* Compact ZIP Input — shrunk ~25% */}
+        <div style={{
+          maxWidth: '420px',
           margin: '0 auto 25px auto',
           textAlign: 'center'
         }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <input
               type="text"
               placeholder="ZIP Code"
               value={zip}
               onChange={(e) => setZip(e.target.value)}
               maxLength={5}
-              style={{ 
-                flex: 1, 
-                padding: '14px', 
-                fontSize: '17px', 
-                borderRadius: '8px',
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: '13px',
+                borderRadius: '6px',
                 border: '2px solid #007BFF'
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') fetchReps(zip);
               }}
             />
-            
-            <button 
+
+            <button
               onClick={() => fetchReps(zip)}
               disabled={loading || zip.length < 5}
-              style={{ 
-                padding: '14px 22px', 
-                fontSize: '16px',
+              style={{
+                padding: '10px 16px',
+                fontSize: '12px',
                 backgroundColor: '#007BFF',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 whiteSpace: 'nowrap'
               }}
             >
-              {loading ? 'Loading...' : 'Show Reps'}
+              {loading ? 'Loading…' : 'Show Reps'}
             </button>
           </div>
         </div>
@@ -3375,6 +3407,10 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
             <div className="reps-grid">
               {reps
                 .filter((rep) => {
+                  // Search overrides tab filtering — when active, match across ALL reps by name
+                  if (officialSearch.trim()) {
+                    return rep.name.toLowerCase().includes(officialSearch.trim().toLowerCase());
+                  }
                   if (activeTab === 'federal') {
                     // Exclude Supreme Court from Federal tab
                     return ['President', 'Vice President', 'U.S. Senator', 'U.S. Representative'].some(level => 
