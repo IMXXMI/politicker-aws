@@ -62,12 +62,12 @@
         "earmarksIngest": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
           "firebaseServiceAccountBase64": "placeholder",
-          "s3Key": "amplify-builds/earmarksIngest-6753586566514c4e4e34-build.zip"
+          "s3Key": "amplify-builds/earmarksIngest-334c484b446769793146-build.zip"
         },
         "earmarksQuery": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
           "firebaseServiceAccountBase64": "placeholder",
-          "s3Key": "amplify-builds/earmarksQuery-56357345513949764a51-build.zip"
+          "s3Key": "amplify-builds/earmarksQuery-4b476a6478484f4e554c-build.zip"
         }
       },
       "api": {

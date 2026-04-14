@@ -49,14 +49,11 @@ async function getFirestore() {
 }
 
 function json(statusCode, body) {
+  // CORS headers are injected by the Lambda Function URL's own CORS config — do NOT duplicate here,
+  // otherwise browsers see double Access-Control-Allow-Origin values and reject the response.
   return {
     statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   };
 }
@@ -75,10 +72,14 @@ exports.handler = async (event) => {
     if (params.state) q = q.where('state', '==', String(params.state).toUpperCase().slice(0, 2));
     if (params.status) q = q.where('status', '==', String(params.status).toLowerCase());
 
-    // Prefix match on memberNameLower — lower-bound + upper-bound-with-appended-\uf8ff trick
+    // Token match on memberNameTokens — matches any word in the name regardless of order.
+    // Accepts space-separated terms; first term is used for the array-contains filter (Firestore
+    // allows only one array-contains per query).
     if (params.member) {
-      const prefix = String(params.member).toLowerCase();
-      q = q.where('memberNameLower', '>=', prefix).where('memberNameLower', '<=', prefix + '\uf8ff').orderBy('memberNameLower');
+      const firstToken = String(params.member).toLowerCase().split(/\s+/).filter(Boolean)[0];
+      if (firstToken && firstToken.length >= 2) {
+        q = q.where('memberNameTokens', 'array-contains', firstToken);
+      }
     }
 
     // Amount range on amount_enacted (requires composite index with any other where)

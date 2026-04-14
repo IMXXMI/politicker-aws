@@ -272,6 +272,10 @@ exports.handler = async (event) => {
         const rows = await fetchAndParseXlsx(url);
         const normalized = rows.map((row, idx) => {
           const hash = crypto.createHash('sha1').update(`${fy}|${url}|${idx}|${row.memberName}|${row.projectTitle}`).digest('hex').slice(0, 20);
+          const nameLower = (row.memberName || '').toLowerCase();
+          // Tokenize on word boundaries so a query by last name (or first name) can match any order.
+          // "Rob Wittman" → ["rob", "wittman"]; "Wittman, Rob" → ["wittman", "rob"].
+          const nameTokens = Array.from(new Set(nameLower.split(/[^a-z]+/).filter((t) => t.length >= 2)));
           return {
             id: `FY${fy || 'UNK'}-${hash}`,
             data: {
@@ -279,7 +283,8 @@ exports.handler = async (event) => {
               chamber: 'house',
               status: row.status || statusFrom(url, null),
               memberName: row.memberName,
-              memberNameLower: (row.memberName || '').toLowerCase(),
+              memberNameLower: nameLower,
+              memberNameTokens: nameTokens,
               state: row.state,
               district: row.district,
               party: row.party,

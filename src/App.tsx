@@ -1244,7 +1244,7 @@ const RepEarmarks: React.FC<{ repName: string }> = ({ repName }) => {
 
   return (
     <div style={{ marginTop: '25px' }}>
-      <h3>Earmarks / Community Project Funding</h3>
+      <h3>Earmarks (Community Project Funding)</h3>
       {loading && earmarks.length === 0 ? (
         <p style={{ fontStyle: 'italic', color: '#777' }}>Loading earmarks…</p>
       ) : error ? (
@@ -2035,34 +2035,6 @@ const RepModal: React.FC<{
           <RepEarmarks repName={selectedRep.name} />
         )}
 
-        {/* Earmarks (separated) */}
-        <div style={{ marginTop: '30px' }}>
-          <h3>Earmarks</h3>
-          {repDetails.earmarks && repDetails.earmarks.length > 0 ? (
-            <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px', padding: '10px' }}>
-              {repDetails.earmarks.map((earmark: string, index: number) => {
-                const earmarkPollId = `earmark_${selectedRep.name}_${index}`;
-                return (
-                  <div key={index} style={{ padding: '12px 15px', marginBottom: '8px', background: '#f9f9f9', borderRadius: '6px' }}>
-                    <p style={{ margin: '0 0 8px', fontSize: '14px' }}>{earmark}</p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => handleVote('approve', null, null, null, selectedRep.name, earmarkPollId)}
-                        style={{ backgroundColor: '#4CAF50', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-                      >👍 Support</button>
-                      <button
-                        onClick={() => handleVote('disapprove', null, null, null, selectedRep.name, earmarkPollId)}
-                        style={{ backgroundColor: '#f44336', color: 'white', padding: '6px 14px', fontSize: '13px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
-                      >👎 Oppose</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p style={{ fontStyle: 'italic', color: '#777' }}>Earmark data coming soon.</p>
-          )}
-        </div>
         </>)}
 
         {/* Live Poll Bar */}
