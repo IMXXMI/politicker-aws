@@ -285,6 +285,29 @@
         }
       }
     },
+    "functionstateOfficialsIngest": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/stateOfficialsIngest-cloudformation-template.json",
+        "Parameters": {
+          "CloudWatchRule": "cron(0 7 ? * SUN *)",
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/stateOfficialsIngest-6d64575169743951512f-build.zip",
+          "env": "awsapp"
+        }
+      }
+    },
+    "functionstateOfficialsQuery": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/stateOfficialsQuery-cloudformation-template.json",
+        "Parameters": {
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/stateOfficialsQuery-4f394c744a34575a5163-build.zip",
+          "env": "awsapp"
+        }
+      }
+    },
     "hostingS3AndCloudFront": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {

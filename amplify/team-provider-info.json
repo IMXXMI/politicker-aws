@@ -68,6 +68,14 @@
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
           "firebaseServiceAccountBase64": "placeholder",
           "s3Key": "amplify-builds/earmarksQuery-4b476a6478484f4e554c-build.zip"
+        },
+        "stateOfficialsIngest": {
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/stateOfficialsIngest-6d64575169743951512f-build.zip"
+        },
+        "stateOfficialsQuery": {
+          "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
+          "s3Key": "amplify-builds/stateOfficialsQuery-4f394c744a34575a5163-build.zip"
         }
       },
       "api": {

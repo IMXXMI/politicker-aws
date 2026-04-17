@@ -53,6 +53,18 @@
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    },
+    "stateOfficialsIngest": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "stateOfficialsQuery": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "hosting": {
@@ -187,6 +199,38 @@
         {
           "category": "function",
           "resourceName": "floorScheduleScraper"
+        }
+      ]
+    },
+    "AMPLIFY_function_stateOfficialsIngest_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "stateOfficialsIngest"
+        }
+      ]
+    },
+    "AMPLIFY_function_stateOfficialsIngest_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "stateOfficialsIngest"
+        }
+      ]
+    },
+    "AMPLIFY_function_stateOfficialsQuery_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "stateOfficialsQuery"
+        }
+      ]
+    },
+    "AMPLIFY_function_stateOfficialsQuery_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "stateOfficialsQuery"
         }
       ]
     }

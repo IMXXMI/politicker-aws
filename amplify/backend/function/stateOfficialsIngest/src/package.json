@@ -1,0 +1,13 @@
+{
+  "name": "stateofficialsingest",
+  "version": "1.0.3",
+  "description": "Scrapes state-level officials (judges, sheriffs, school boards, county officials) and writes to Firestore.",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92"
+  }
+}

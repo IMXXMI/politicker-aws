@@ -1,0 +1,13 @@
+{
+  "name": "stateofficialsquery",
+  "version": "1.0.4",
+  "description": "HTTP query endpoint for the stateOfficials Firestore collection.",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.92"
+  }
+}

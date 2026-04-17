@@ -25,6 +25,7 @@ import {
 } from 'firebase/firestore';
 import './App.css';
 import { useEarmarks } from './hooks/useEarmarks';
+import { useStateOfficials } from './hooks/useStateOfficials';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -1229,6 +1230,152 @@ const DistrictSpending: React.FC<{ stateCode: string; districtNumber?: number; c
   );
 };
 
+// ====================== STATE OFFICIALS (Firestore via stateOfficialsQuery Lambda) ======================
+const StateOfficialsSection: React.FC<{
+  stateCode: string;
+  locality?: string;
+  onOfficialClick?: (rep: Rep) => void;
+  onlyCategory?: 'sheriff' | 'state-judge' | 'school-board' | 'county-board';
+}> = ({ stateCode, locality, onOfficialClick, onlyCategory }) => {
+  const [subTab, setSubTab] = useState<'sheriff' | 'state-judge' | 'school-board' | 'county-board'>(onlyCategory || 'sheriff');
+  const activeCategory = onlyCategory || subTab;
+  const isStatewide = activeCategory === 'state-judge' || activeCategory === 'school-board';
+  const localityFilter = isStatewide ? undefined : (locality || undefined);
+  const { officials, loading, error, hasMore, loadMore } = useStateOfficials({ state: stateCode, category: activeCategory, locality: localityFilter, limit: 50 });
+
+  const labels: Record<string, string> = {
+    'sheriff': 'Sheriffs',
+    'state-judge': 'State Judges',
+    'school-board': 'School Board',
+    'county-board': 'County Officials',
+  };
+  const colors: Record<string, string> = {
+    'sheriff': '#b45309',
+    'state-judge': '#6b21a8',
+    'school-board': '#0891b2',
+    'county-board': '#1976d2',
+  };
+
+  if (!stateCode) return null;
+
+  return (
+    <div style={{ marginTop: '30px' }}>
+      {!onlyCategory && (
+        <h3>{locality ? `Local Officials — ${locality}, ${stateCode}` : `Local Officials — ${stateCode}`}</h3>
+      )}
+      {/* Hide sub-tabs when locked to a single category */}
+      {!onlyCategory && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+          {(['sheriff', 'state-judge', 'school-board', 'county-board'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setSubTab(t)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '12px',
+                borderRadius: '16px',
+                border: `1px solid ${colors[t]}`,
+                background: subTab === t ? colors[t] : '#fff',
+                color: subTab === t ? '#fff' : colors[t],
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {labels[t]}
+            </button>
+          ))}
+        </div>
+      )}
+      {loading && officials.length === 0 ? (
+        <p style={{ fontStyle: 'italic', color: '#777' }}>Loading…</p>
+      ) : error ? (
+        <p style={{ color: '#c00', fontSize: '13px' }}>{error}</p>
+      ) : officials.length === 0 ? (
+        <p style={{ fontStyle: 'italic', color: '#777' }}>
+          No {labels[subTab].toLowerCase()} loaded yet. {subTab === 'school-board' || subTab === 'county-board' ? 'Per-locality scrapers coming soon.' : ''}
+        </p>
+      ) : (
+        <div className="reps-grid">
+          {officials.map((o) => {
+            const isClickable = o.category === 'county-board' || o.category === 'school-board' || o.category === 'sheriff';
+            const handleClick = () => {
+              if (isClickable && onOfficialClick) {
+                const levelMap: Record<string, string> = { 'school-board': 'School Board', 'county-board': 'County Board', 'sheriff': 'Sheriff' };
+                onOfficialClick({
+                  name: o.name,
+                  party: o.party || o.office,
+                  photo: o.photo || '',
+                  level: levelMap[o.category] || o.office,
+                  contact: o.contact?.website || o.sourceUrl || '',
+                  phone: o.contact?.phone || '',
+                  score: 0,
+                  id: `state-official-${o.id}`,
+                  xHandle: '',
+                  stateCode: o.state,
+                });
+              }
+            };
+            return (
+              <div
+                key={o.id}
+                className="rep-card"
+                onClick={handleClick}
+                style={{
+                  cursor: isClickable ? 'pointer' : 'default',
+                  borderTop: `4px solid ${colors[o.category] || '#666'}`,
+                  background: isClickable ? 'linear-gradient(180deg, #f0fdf4 0%, #fff 40%)' : undefined,
+                }}
+              >
+                <div style={{
+                  width: '100px', height: '100px', borderRadius: '8px',
+                  background: colors[o.category] || '#666', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '48px', margin: '0 auto',
+                }}>
+                  {o.category === 'sheriff' ? '⭐' : o.category === 'state-judge' ? '⚖️' : o.category === 'school-board' ? '🎓' : '🏛️'}
+                </div>
+                <h4 style={{ marginTop: '8px', fontSize: '15px' }}>{o.name}</h4>
+                <p style={{ color: colors[o.category] || '#666', fontWeight: 600, margin: '2px 0', fontSize: '0.85em' }}>
+                  {o.office}
+                </p>
+                {o.locality && (
+                  <p style={{ fontSize: '0.8em', color: '#555', margin: '2px 0' }}>{o.locality}</p>
+                )}
+                {o.tookOffice && (
+                  <p style={{ fontSize: '0.75em', color: '#777', margin: '2px 0' }}>
+                    Serving since {o.tookOffice.split('/').pop() || o.tookOffice}
+                  </p>
+                )}
+                {isClickable && (
+                  <p style={{ fontSize: '0.75em', color: '#059669', fontWeight: 600, margin: '4px 0 0' }}>
+                    Tap to vote / view details →
+                  </p>
+                )}
+                {!isClickable && o.contact?.website && (
+                  <a href={o.contact.website} target="_blank" rel="noopener noreferrer"
+                     onClick={(e) => e.stopPropagation()}
+                     style={{ fontSize: '0.8em', color: colors[o.category] || '#666' }}>
+                    Profile →
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {hasMore && (
+        <button
+          onClick={loadMore}
+          disabled={loading}
+          style={{ marginTop: '10px', padding: '6px 12px', fontSize: '12px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          {loading ? 'Loading…' : 'Load more'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 // ====================== REP EARMARKS (Firestore via earmarksQuery Lambda) ======================
 const RepEarmarks: React.FC<{ repName: string }> = ({ repName }) => {
   // Use last name as filter — matches against memberNameLower prefix across varying CPF name formats
@@ -1535,6 +1682,10 @@ const RepModal: React.FC<{
   const isVicePresident = selectedRep.id === 'vice-president';
   const isGovernor = selectedRep.level === 'Governor' || selectedRep.id?.startsWith('governor-');
   const isExecutive = isPresident || isVicePresident;
+  const isCountyBoard = selectedRep.level === 'County Board';
+  const isSchoolBoard = selectedRep.level === 'School Board';
+  const isStateSheriff = selectedRep.level === 'Sheriff' && selectedRep.id?.startsWith('state-official-');
+  const isVotingLocalOfficial = isCountyBoard || isSchoolBoard;
 
   // Real-time approval score
   const repResults = repPolls[selectedRep.name] || {};
@@ -1810,8 +1961,80 @@ const RepModal: React.FC<{
           </div>
         )}
 
-        {/* Sections hidden for judges, local officials, SCOTUS, executive officials, and Governors */}
-        {!isJudge && !isLocalOfficial && !isScotus && !isExecutive && !isGovernor && (<>
+        {/* County Board / School Board — voting local officials get their own section */}
+        {isVotingLocalOfficial && (
+          <div style={{ marginTop: '30px' }}>
+            <h3>{isSchoolBoard ? 'School Board' : 'County Board'} Member</h3>
+            <div style={{
+              background: isSchoolBoard ? '#ecfeff' : '#ecfdf5',
+              border: `1px solid ${isSchoolBoard ? '#a5f3fc' : '#a7f3d0'}`,
+              borderRadius: '8px', padding: '15px'
+            }}>
+              <p style={{ margin: '0 0 6px' }}><strong>Office:</strong> {selectedRep.party}</p>
+              {selectedRep.stateCode && <p style={{ margin: '0 0 6px' }}><strong>State:</strong> {selectedRep.stateCode}</p>}
+              {selectedRep.contact && selectedRep.contact !== '#' && (
+                <p style={{ margin: '6px 0 0' }}>
+                  <a href={selectedRep.contact} target="_blank" rel="noopener noreferrer"
+                     style={{ color: isSchoolBoard ? '#0891b2' : '#059669', fontWeight: 600 }}>
+                    {isSchoolBoard ? 'School district website' : 'County government website'} →
+                  </a>
+                </p>
+              )}
+              <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#555' }}>
+                {isSchoolBoard
+                  ? 'School board members vote on education policy, budgets, and superintendent hiring for their district.'
+                  : 'County board members (supervisors/commissioners) vote on local budgets, zoning, land use, and county services.'}
+              </p>
+            </div>
+
+            {/* Framing + voting section for local officials */}
+            <div style={{ marginTop: '20px', padding: '12px 15px', background: '#e8f4fd', border: '1px solid #bee5eb', borderRadius: '8px' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#0c5460' }}>
+                <strong>Let {selectedRep.name} know how you&apos;d like them to vote on your behalf.</strong> Your approval and feedback helps hold local officials accountable.
+              </p>
+            </div>
+
+            {/* Voting history placeholder — links to meeting minutes when available */}
+            <div style={{ marginTop: '20px' }}>
+              <h3>Voting Record</h3>
+              <div style={{ border: '1px solid #eee', borderRadius: '8px', padding: '15px', background: '#f9f9f9' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#555' }}>
+                  Local voting records are sourced from public meeting minutes.
+                </p>
+                {selectedRep.contact && selectedRep.contact !== '#' && (
+                  <a href={selectedRep.contact} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontWeight: 600 }}>
+                    View meeting minutes and agendas →
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sheriff-specific section — approval poll + info, no voting record */}
+        {isStateSheriff && (
+          <div style={{ marginTop: '30px' }}>
+            <h3>Sheriff&apos;s Office</h3>
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '15px' }}>
+              <p style={{ margin: '0 0 6px' }}><strong>Office:</strong> {selectedRep.party}</p>
+              {selectedRep.stateCode && <p style={{ margin: '0 0 6px' }}><strong>State:</strong> {selectedRep.stateCode}</p>}
+              {selectedRep.phone && <p style={{ margin: '0 0 6px' }}><strong>Phone:</strong> {selectedRep.phone}</p>}
+              {selectedRep.contact && selectedRep.contact !== '#' && (
+                <p style={{ margin: '6px 0 0' }}>
+                  <a href={selectedRep.contact} target="_blank" rel="noopener noreferrer" style={{ color: '#b45309', fontWeight: 600 }}>
+                    Sheriff&apos;s office website →
+                  </a>
+                </p>
+              )}
+              <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#555' }}>
+                Sheriffs are elected law enforcement officers responsible for maintaining peace, serving warrants, operating the county jail, and providing court security.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Sections hidden for judges, local officials, SCOTUS, executive officials, Governors, voting local officials, and sheriffs */}
+        {!isJudge && !isLocalOfficial && !isScotus && !isExecutive && !isGovernor && !isVotingLocalOfficial && !isStateSheriff && (<>
 
         {/* Recent Voting History — real roll-call votes from voteview.com (updated daily), compared to constituent polls */}
         <div style={{ marginTop: '30px' }}>
@@ -2083,18 +2306,13 @@ function App() {
   const [localOfficials, setLocalOfficials] = useState<any[]>([]);
   const [upcomingVotes, setUpcomingVotes] = useState<Array<{chamber: string; billId: string; title: string; source?: string}>>([]);
   const [memberVotes, setMemberVotes] = useState<Array<{rollnumber: number; date: string; chamber: string; bill: string; title?: string; description: string; position: string; congress: number}>>([]);
-  const [localReps, setLocalReps] = useState<Rep[]>([]);
-  const [localLoading, setLocalLoading] = useState(false);
-  const [localSubTab, setLocalSubTab] = useState<'all' | 'county' | 'judges' | 'school' | 'sheriff'>('all');
-  const [localStreet, setLocalStreet] = useState('');
-  const [localCity, setLocalCity] = useState('');
-  const [localStateCode, setLocalStateCode] = useState('');
    const [pollVotes, setPollVotes] = useState<{ [pollId: string]: { [option: string]: number } }>({});
    const [user, setUser] = useState<User | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
   const [officialSearch, setOfficialSearch] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchDidRun, setSearchDidRun] = useState(false);
+  const [showStateBOE, setShowStateBOE] = useState(false);
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null);
   const [repDetails, setRepDetails] = useState<RepDetails>({ bio: '', votes: [], bills: [], comments: [] });
   const [showRepModal, setShowRepModal] = useState(false);
@@ -2523,6 +2741,9 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                          rep.id?.startsWith('cabinet-');
     const isLocal = rep.id?.startsWith('local-');
     const isFederalJudge = rep.id?.startsWith('local-judge-');
+    const isStateOfficial = rep.id?.startsWith('state-official-');
+    const isVotingLocalOfficial = isStateOfficial && (rep.level === 'County Board' || rep.level === 'School Board');
+    const isStateSheriff = isStateOfficial && rep.level === 'Sheriff';
 
     if (isFederalJudge) {
       // Fetch full judge profile from CourtListener
@@ -2702,6 +2923,32 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
           votes: [], bills: [], cosponsoredBills: [], comments: [], earmarks: []
         });
       }
+      return;
+    }
+
+    // State sheriff → approval poll + sheriff-specific info
+    if (isStateSheriff) {
+      setRepDetails({
+        bio: `${rep.name} — ${rep.level}, ${rep.party || ''}.\n\n${rep.stateCode ? `State: ${rep.stateCode}` : ''}`,
+        votes: [], bills: [], cosponsoredBills: [], comments: [], earmarks: [],
+      });
+      return;
+    }
+
+    // State county-board / school-board officials → voting officials with approval polls
+    if (isVotingLocalOfficial) {
+      const bioLines: string[] = [`${rep.name} — ${rep.level}`];
+      if (rep.party && rep.party !== rep.level) bioLines.push(`Office: ${rep.party}`);
+      if (rep.stateCode) bioLines.push(`State: ${rep.stateCode}`);
+      if (rep.contact) bioLines.push(`Contact: ${rep.contact}`);
+      setRepDetails({
+        bio: bioLines.join('\n'),
+        votes: [],
+        bills: [],
+        cosponsoredBills: [],
+        comments: [],
+        earmarks: [],
+      });
       return;
     }
 
@@ -3067,99 +3314,6 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
     return reps;
   };
 
-  const fetchLocalOfficials = async (fullAddress: string) => {
-    setLocalLoading(true);
-    try {
-      // 1) Try the apiProxy Lambda first (preferred — hides key, no CORS issues)
-      const proxyBase = process.env.REACT_APP_CONGRESS_PROXY_URL;
-      let data: any = null;
-
-      if (proxyBase) {
-        try {
-          const r = await fetch(`${proxyBase}/?service=cicero&address=${encodeURIComponent(fullAddress)}`);
-          if (r.ok) data = await r.json();
-          else console.warn('apiProxy cicero returned', r.status);
-        } catch (e) {
-          console.warn('apiProxy cicero fetch failed', e);
-        }
-      }
-
-      // 2) Fallback to public CORS proxies (dev mode / before Amplify redeploy)
-      // Disabled automatically when key ends with 'DISABLED' so a dead key stops spamming network errors.
-      if (!data) {
-        const ciceroKey = process.env.REACT_APP_CICERO_API_KEY;
-        if (ciceroKey && !ciceroKey.endsWith('DISABLED')) {
-          const ciceroUrl = `https://app.cicerodata.com/v3.1/official/?address=${encodeURIComponent(fullAddress)}&format=json&key=${ciceroKey}`;
-          const proxies = [
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(ciceroUrl)}`,
-            `https://corsproxy.io/?${encodeURIComponent(ciceroUrl)}`,
-          ];
-          for (const p of proxies) {
-            try {
-              const r = await fetch(p);
-              if (r.ok) { data = await r.json(); break; }
-            } catch (e) { /* try next */ }
-          }
-        }
-      }
-      const officials: any[] =
-        data?.response?.results?.candidates?.[0]?.officials ||
-        data?.response?.results?.officials ||
-        data?.officials ||
-        [];
-
-      const mapped: Rep[] = officials.map((o: any) => {
-        const office = o.office || {};
-        const district = office.district || {};
-        const title = office.title || '';
-        const districtType = district.district_type || '';
-        const { level } = categorizeLocalOfficial(title, districtType);
-        const phone = (o.addresses && o.addresses[0] && (o.addresses[0].phone_1 || o.addresses[0].phone_2)) || '';
-        const url = (o.urls && o.urls[0]) || '';
-        const fullName = [o.first_name, o.middle_initial, o.last_name].filter(Boolean).join(' ').trim();
-        return {
-          name: fullName || 'Unknown',
-          party: o.party || title || 'Local',
-          photo: o.photo_origin_url || 'https://placehold.co/100x100?text=Local',
-          level,
-          contact: url,
-          phone,
-          score: 0,
-          id: 'local-' + (o.id || `${fullName}-${title}`),
-          xHandle: ''
-        };
-      });
-
-      setLocalOfficials(officials);
-
-      // 3) Always add free federal judges from CourtListener for this state
-      const federalJudges = await fetchFederalJudges(localStateCode);
-      console.log(`CourtListener federal judges: ${federalJudges.length}`);
-
-      // 4) If Cicero returned nothing, also try Wikidata for sheriffs/school board
-      let wdReps: Rep[] = [];
-      if (mapped.length === 0) {
-        console.log('Cicero returned no officials — trying Wikidata fallback');
-        const addressLabel = `${localCity} ${localStateCode}`.trim() || fullAddress;
-        wdReps = await fetchWikidataFallback(addressLabel);
-        console.log(`Wikidata fallback: ${wdReps.length}`);
-      }
-
-      const combined = [...mapped, ...federalJudges, ...wdReps];
-      if (combined.length === 0) {
-        setLocalReps([]);
-        alert('No local officials found for this address.');
-      } else {
-        setLocalReps(combined);
-        console.log(`Local officials total: ${combined.length}`);
-      }
-    } catch (err) {
-      console.error('fetchLocalOfficials error:', err);
-      alert('Failed to load local officials. Please try again later.');
-    } finally {
-      setLocalLoading(false);
-    }
-  };
 
       const handleSignOut = async () => {
         try {
@@ -3577,10 +3731,35 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
         </div>
 
         {/* Reps Grid */}
+        {/* State Board of Education — toggle button on State tab */}
+        {activeTab === 'state' && userState && (
+          <div style={{ maxWidth: '900px', margin: '0 auto 20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowStateBOE((prev: boolean) => !prev)}
+              style={{
+                padding: '8px 16px',
+                fontSize: '13px',
+                background: showStateBOE ? '#0891b2' : '#fff',
+                color: showStateBOE ? '#fff' : '#0891b2',
+                border: '1px solid #0891b2',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                marginBottom: '12px',
+              }}
+            >
+              🎓 State Board of Education {showStateBOE ? '▲' : '▼'}
+            </button>
+            {showStateBOE && (
+              <StateOfficialsSection stateCode={userState} onlyCategory="school-board" onOfficialClick={fetchRepDetails} />
+            )}
+          </div>
+        )}
+
         {reps.length > 0 && (
           <div className="reps-section">
             {county && <p className="county-banner">Your County: {county}</p>}
-            
+
             <div className="reps-grid">
               {reps
                 .filter((rep) => {
@@ -3668,174 +3847,15 @@ const [showVerifyModal, setShowVerifyModal] = useState(false);
                 })}
             </div>
 
-            {/* Local Tab Content - Cicero API lookup by full address */}
+            {/* Local Tab Content — powered by StateOfficialsSection (Socrata + scrapers) */}
             {activeTab === 'local' && (
-              <div style={{ marginTop: '30px' }}>
-                <h3 style={{ textAlign: 'center' }}>Find Local Officials</h3>
-                <p style={{ color: '#666', textAlign: 'center', marginBottom: '15px' }}>
-                  Enter a full address to look up County Officials, Judges, School Board, and Sheriff.
-                </p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
-                  <input
-                    type="text"
-                    placeholder="Street address"
-                    value={localStreet}
-                    onChange={(e) => setLocalStreet(e.target.value)}
-                    style={{ padding: '8px', minWidth: '220px', borderRadius: '6px', border: '1px solid #ccc' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="City"
-                    value={localCity}
-                    onChange={(e) => setLocalCity(e.target.value)}
-                    style={{ padding: '8px', minWidth: '140px', borderRadius: '6px', border: '1px solid #ccc' }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="State (e.g. VA)"
-                    value={localStateCode}
-                    onChange={(e) => setLocalStateCode(e.target.value.toUpperCase())}
-                    maxLength={2}
-                    style={{ padding: '8px', width: '80px', borderRadius: '6px', border: '1px solid #ccc' }}
-                  />
-                  <button
-                    onClick={() => {
-                      const addr = `${localStreet}, ${localCity}, ${localStateCode}`.trim();
-                      if (!localStreet || !localCity || !localStateCode) {
-                        alert('Please fill in street, city, and state.');
-                        return;
-                      }
-                      fetchLocalOfficials(addr);
-                    }}
-                    disabled={localLoading}
-                    style={{ padding: '8px 16px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                  >
-                    {localLoading ? 'Loading...' : 'Find Local Officials'}
-                  </button>
-                </div>
-
-                {localReps.length > 0 && (
-                  <>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
-                      {([
-                        { key: 'all', label: 'All' },
-                        { key: 'county', label: 'County Officials' },
-                        { key: 'judges', label: 'Judges' },
-                        { key: 'school', label: 'School Board' },
-                        { key: 'sheriff', label: 'Sheriff' },
-                      ] as const).map(t => (
-                        <button
-                          key={t.key}
-                          onClick={() => setLocalSubTab(t.key)}
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: '20px',
-                            border: '1px solid #1976d2',
-                            background: localSubTab === t.key ? '#1976d2' : '#fff',
-                            color: localSubTab === t.key ? '#fff' : '#1976d2',
-                            cursor: 'pointer',
-                            fontWeight: 600
-                          }}
-                        >
-                          {t.label} {t.key !== 'all' && `(${localReps.filter(r => {
-                            if (t.key === 'county') return r.level === 'County Official';
-                            if (t.key === 'judges') return r.level === 'Judge' || r.level === 'Federal Judge';
-                            if (t.key === 'school') return r.level === 'School Board';
-                            if (t.key === 'sheriff') return r.level === 'Sheriff';
-                            return false;
-                          }).length})`}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="reps-grid">
-                      {localReps
-                        .filter(rep => {
-                          if (localSubTab === 'all') return true;
-                          if (localSubTab === 'county') return rep.level === 'County Official';
-                          if (localSubTab === 'judges') return rep.level === 'Judge' || rep.level === 'Federal Judge';
-                          if (localSubTab === 'school') return rep.level === 'School Board';
-                          if (localSubTab === 'sheriff') return rep.level === 'Sheriff';
-                          return false;
-                        })
-                        .map((rep, i) => {
-                          const isJudge = rep.level === 'Federal Judge' || rep.level === 'Judge';
-                          // Parse court id out of party field "U.S. District Judge (vaed)"
-                          const courtMatch = isJudge ? rep.party.match(/\(([^)]+)\)/) : null;
-                          const courtId = courtMatch ? courtMatch[1] : '';
-                          const judgeTitle = isJudge ? rep.party.replace(/\s*\([^)]*\)\s*/, '').trim() : '';
-
-                          return (
-                            <div
-                              key={rep.id + '-' + i}
-                              className="rep-card"
-                              onClick={() => fetchRepDetails(rep)}
-                              style={{
-                                cursor: 'pointer',
-                                borderTop: isJudge ? '4px solid #6b21a8' : undefined,
-                                background: isJudge ? 'linear-gradient(180deg, #faf5ff 0%, #fff 40%)' : undefined,
-                              }}
-                            >
-                              {isJudge ? (
-                                <>
-                                  <div style={{
-                                    width: '100px', height: '100px', borderRadius: '8px',
-                                    background: '#6b21a8', color: '#fff',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '48px', margin: '0 auto'
-                                  }}>⚖️</div>
-                                  <h4 style={{ marginTop: '8px', marginBottom: '2px' }}>Hon. {rep.name}</h4>
-                                  <p style={{ color: '#6b21a8', fontWeight: 600, margin: '2px 0', fontSize: '0.9em' }}>
-                                    {judgeTitle}
-                                  </p>
-                                  {courtId && (
-                                    <p style={{ fontSize: '0.8em', color: '#555', margin: '2px 0' }}>
-                                      <code>{courtId}</code>
-                                    </p>
-                                  )}
-                                  {rep.judgeInfo?.appointerName && (
-                                    <p style={{ fontSize: '0.8em', color: '#333', margin: '4px 0 2px' }}>
-                                      Appointed by <strong>{rep.judgeInfo.appointerName}</strong>
-                                      {rep.judgeInfo.dateStart && ` (${rep.judgeInfo.dateStart.slice(0, 4)})`}
-                                    </p>
-                                  )}
-                                  {!rep.judgeInfo?.appointerName && rep.judgeInfo?.dateStart && (
-                                    <p style={{ fontSize: '0.8em', color: '#555', margin: '4px 0 2px' }}>
-                                      Serving since {rep.judgeInfo.dateStart.slice(0, 4)}
-                                    </p>
-                                  )}
-                                  {rep.contact && (
-                                    <a
-                                      href={rep.contact}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      style={{ fontSize: '0.8em', color: '#6b21a8' }}
-                                    >
-                                      Profile →
-                                    </a>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <img
-                                    src={rep.photo || 'https://placehold.co/100x100?text=Local'}
-                                    alt={rep.name}
-                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
-                                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Local'; }}
-                                  />
-                                  <h4>{rep.name}</h4>
-                                  <p><strong>Office:</strong> {rep.party}</p>
-                                  <p><strong>Level:</strong> {rep.level}</p>
-                                  {rep.phone && <p><strong>Phone:</strong> {rep.phone}</p>}
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </>
+              <div style={{ marginTop: '20px' }}>
+                {userState ? (
+                  <StateOfficialsSection stateCode={userState} locality={county} onOfficialClick={fetchRepDetails} />
+                ) : (
+                  <p style={{ textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                    Enter a ZIP code above to see local officials for your area.
+                  </p>
                 )}
               </div>
             )}
