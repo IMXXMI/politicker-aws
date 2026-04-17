@@ -46,26 +46,53 @@ function categorizeDataset(name, desc) {
 
 function extractOfficialFromRow(row, stateCode, category) {
   // Try common Socrata field names for name/county/office
-  const name =
-    row.name || row.full_name || row.member_name || row.official_name ||
-    row.sheriff_name || row.sheriff || row.board_member ||
-    [row.first_name, row.last_name].filter(Boolean).join(' ') ||
-    [row.firstname, row.lastname].filter(Boolean).join(' ') ||
-    '';
+  // Try every common column name variation — each state uses different names
+  const tryFields = (obj, ...keys) => {
+    for (const k of keys) {
+      // Try exact key, lowercase key, and uppercase key
+      const val = obj[k] || obj[k.toLowerCase()] || obj[k.toUpperCase()] || obj[k.replace(/_/g, '')] || obj[k.replace(/_/g, ' ')];
+      if (val && String(val).trim().length > 1) return String(val).trim();
+    }
+    // Also try iterating all keys for substring matches
+    for (const [objKey, objVal] of Object.entries(obj)) {
+      const lower = objKey.toLowerCase();
+      for (const k of keys) {
+        if (lower.includes(k.toLowerCase()) && objVal && String(objVal).trim().length > 1) {
+          return String(objVal).trim();
+        }
+      }
+    }
+    return null;
+  };
+
+  const name = tryFields(row,
+    'name', 'full_name', 'member_name', 'official_name', 'sheriff_name', 'sheriff',
+    'board_member', 'person', 'officeholder', 'incumbent', 'elected_official',
+    'officer_name', 'contact_name', 'representative'
+  ) || [
+    tryFields(row, 'first_name', 'firstname', 'first', 'given_name'),
+    tryFields(row, 'last_name', 'lastname', 'last', 'family_name', 'surname')
+  ].filter(Boolean).join(' ') || '';
   if (!name || name.length < 3) return null;
 
-  const locality =
-    row.county || row.county_name || row.district || row.district_name ||
-    row.jurisdiction || row.locality || row.school_district || row.parish ||
-    null;
+  const locality = tryFields(row,
+    'county', 'county_name', 'county_desc', 'countydesc', 'cnty',
+    'district', 'district_name', 'school_district', 'district_desc',
+    'jurisdiction', 'jurisdiction_name', 'juris',
+    'locality', 'locale', 'location', 'location_name',
+    'parish', 'parish_name', 'borough', 'borough_name',
+    'municipality', 'municipal', 'city', 'city_name', 'town',
+    'region', 'area', 'zone', 'precinct'
+  );
 
-  const office =
-    row.office || row.title || row.position || row.role || row.office_title ||
-    (category === 'sheriff' ? 'Sheriff' : category === 'school-board' ? 'Board of Education Member' : 'County Official');
+  const office = tryFields(row,
+    'office', 'title', 'position', 'role', 'office_title', 'office_name',
+    'job_title', 'designation', 'office_held', 'elected_office'
+  ) || (category === 'sheriff' ? 'Sheriff' : category === 'school-board' ? 'Board of Education Member' : 'County Official');
 
-  const phone = row.phone || row.phone_number || row.telephone || null;
-  const email = row.email || row.email_address || null;
-  const website = row.website || row.url || row.web || null;
+  const phone = tryFields(row, 'phone', 'phone_number', 'telephone', 'phone_1', 'office_phone', 'contact_phone');
+  const email = tryFields(row, 'email', 'email_address', 'e_mail', 'contact_email', 'office_email');
+  const website = tryFields(row, 'website', 'url', 'web', 'web_site', 'homepage', 'link');
 
   return {
     id: makeId(stateCode, category, (locality || '').toLowerCase(), name.toLowerCase()),

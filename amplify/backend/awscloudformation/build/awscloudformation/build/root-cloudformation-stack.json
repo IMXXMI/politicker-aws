@@ -292,7 +292,7 @@
         "Parameters": {
           "CloudWatchRule": "cron(0 7 ? * SUN *)",
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/stateOfficialsIngest-6d64575169743951512f-build.zip",
+          "s3Key": "amplify-builds/stateOfficialsIngest-2b62586f444777477839-build.zip",
           "env": "awsapp"
         }
       }
@@ -303,7 +303,7 @@
         "TemplateURL": "https://s3.amazonaws.com/amplify-politicker-awsapp-b5b7d-deployment/amplify-cfn-templates/function/stateOfficialsQuery-cloudformation-template.json",
         "Parameters": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/stateOfficialsQuery-4f394c744a34575a5163-build.zip",
+          "s3Key": "amplify-builds/stateOfficialsQuery-745a4c70553747675372-build.zip",
           "env": "awsapp"
         }
       }

@@ -71,11 +71,11 @@
         },
         "stateOfficialsIngest": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/stateOfficialsIngest-6d64575169743951512f-build.zip"
+          "s3Key": "amplify-builds/stateOfficialsIngest-2b62586f444777477839-build.zip"
         },
         "stateOfficialsQuery": {
           "deploymentBucketName": "amplify-politicker-awsapp-b5b7d-deployment",
-          "s3Key": "amplify-builds/stateOfficialsQuery-4f394c744a34575a5163-build.zip"
+          "s3Key": "amplify-builds/stateOfficialsQuery-745a4c70553747675372-build.zip"
         }
       },
       "api": {
