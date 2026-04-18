@@ -1,11 +1,11 @@
 /**
- * VA county Boards of Supervisors + city Councils for top-10 VA localities.
- * Uses the shared localities registry + generic extractor. Each locality that fails (404, parsing
- * found nothing) is logged but doesn't crash the scraper.
+ * CA county Boards of Supervisors for top-10 CA counties.
+ * Uses the shared localities registry + generic VA extractor. Each locality that fails (404,
+ * parsing found nothing) is logged but doesn't crash the scraper.
  */
 const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const localities = require('./localities');
-const { fetchHtml, extractMembers } = require('./extractor');
+const { fetchHtml, extractMembers } = require('../va/extractor');
 
 async function scrape() {
   const items = [];
@@ -29,12 +29,12 @@ async function scrape() {
       for (const mem of members) {
         const cleaned = cleanName(mem.name);
         if (!cleaned) continue;
-        const office = loc.kind === 'city' ? 'City Council Member' : 'Board of Supervisors Member';
+        const office = 'Board of Supervisors Member';
         items.push({
-          id: makeId('VA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
+          id: makeId('CA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'county-board',
-            state: 'VA',
+            state: 'CA',
             locality: normLoc,
             localityLower,
             office: mem.role ? `${office} (${mem.role})` : office,
@@ -57,7 +57,7 @@ async function scrape() {
       console.warn(`  [BoS] ${loc.locality}: ${e.message}`);
     }
   }
-  console.log(`VA county boards total: ${items.length}`);
+  console.log(`CA county boards total: ${items.length}`);
   return items;
 }
 

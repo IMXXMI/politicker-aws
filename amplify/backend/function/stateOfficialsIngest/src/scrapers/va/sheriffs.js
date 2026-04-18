@@ -2,7 +2,7 @@
  * VA sheriffs scraper — seniority list on vasheriff.org has all 123 sheriffs in a single table.
  * Table columns: [#, Jurisdiction, Sheriff Name, Start Date].
  */
-const { nameTokens, makeId } = require('../../common/firestore');
+const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 
 const SOURCE_URL = 'https://vasheriff.org/sheriffs-resources/seniority-list/';
 
@@ -31,15 +31,19 @@ async function scrape() {
     const name = sheriffRaw.replace(/^Sheriff\s+/i, '').trim();
     if (!name || !locality) continue;
 
+    const cleaned = cleanName(name);
+    if (!cleaned) continue;
+    const loc = normalizeLocality(locality);
     items.push({
-      id: makeId('VA', 'sheriff', locality.toLowerCase(), name.toLowerCase()),
+      id: makeId('VA', 'sheriff', (loc.locality || '').toLowerCase(), cleaned.toLowerCase()),
       data: {
         category: 'sheriff',
         state: 'VA',
-        locality,
+        locality: loc.locality,
+        localityLower: loc.localityLower,
         office: 'Sheriff',
-        name,
-        nameTokens: nameTokens(name),
+        name: cleaned,
+        nameTokens: nameTokens(cleaned),
         party: null,
         tookOffice: startDate || null,
         termEnds: null,

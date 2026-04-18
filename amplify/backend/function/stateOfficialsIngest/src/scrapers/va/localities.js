@@ -1,26 +1,21 @@
 /**
  * Top-10 Virginia localities by population — registry for Board of Supervisors / City Council
- * and School Board member pages. Each entry carries source URLs + extraction hints.
- *
- * `verified: false` means we haven't confirmed the URL structure yet at build time; the scraper
- * logs each URL's status so it's easy to see what's broken and fix the URL here.
- *
- * Adding new localities = add an entry to this array. No code changes needed.
+ * and School Board member pages.
  */
 
 module.exports = [
   {
     locality: 'Fairfax County',
     kind: 'county',
-    bosUrl: 'https://www.fairfaxcounty.gov/boardofsupervisors/board-of-supervisors',
+    bosUrl: 'https://www.fairfaxcounty.gov/boardofsupervisors/members-and-districts',
     schoolBoardUrl: 'https://www.fcps.edu/about-fcps/school-board',
-    cms: 'civicplus',   // Fairfax uses a CivicPlus variant
+    cms: 'civicplus',
   },
   {
     locality: 'Virginia Beach',
     kind: 'city',
-    bosUrl: 'https://www.virginiabeach.gov/government/city-council',
-    schoolBoardUrl: 'https://www.vbschools.com/about-us/school-board',
+    bosUrl: 'https://www.vbgov.com/government/departments/city-council/Pages/default.aspx',
+    schoolBoardUrl: 'https://www.vbschools.com/about_us/school_board',
     cms: 'custom',
   },
   {
@@ -34,13 +29,13 @@ module.exports = [
     locality: 'Loudoun County',
     kind: 'county',
     bosUrl: 'https://www.loudoun.gov/248/Board-of-Supervisors',
-    schoolBoardUrl: 'https://www.lcps.org/Page/120',
+    schoolBoardUrl: 'https://www.lcps.org/domain/120',
     cms: 'civicplus',
   },
   {
     locality: 'Chesterfield County',
     kind: 'county',
-    bosUrl: 'https://www.chesterfield.gov/180/Board-of-Supervisors',
+    bosUrl: 'https://www.chesterfield.gov/government/board-of-supervisors',
     schoolBoardUrl: 'https://mychesterfieldschools.com/our-district/leadership/school-board/',
     cms: 'civicplus',
   },
@@ -55,28 +50,28 @@ module.exports = [
     locality: 'Arlington County',
     kind: 'county',
     bosUrl: 'https://www.arlingtonva.us/Government/County-Board',
-    schoolBoardUrl: 'https://www.apsva.us/school-board/',
+    schoolBoardUrl: 'https://www.apsva.us/school-board-members/',
     cms: 'opencities',
   },
   {
     locality: 'Chesapeake',
     kind: 'city',
-    bosUrl: 'https://www.cityofchesapeake.net/government/city-council/members.htm',
-    schoolBoardUrl: 'https://cpschools.com/about-us/school-board/',
+    bosUrl: 'https://www.cityofchesapeake.net/government/city-council',
+    schoolBoardUrl: 'https://cpschools.com/school-board/',
     cms: 'custom',
   },
   {
     locality: 'Norfolk',
     kind: 'city',
     bosUrl: 'https://www.norfolk.gov/397/City-Council',
-    schoolBoardUrl: 'https://www.npsk12.com/Page/55',
+    schoolBoardUrl: 'https://www.npsk12.com/domain/55',
     cms: 'civicplus',
   },
   {
     locality: 'Richmond',
     kind: 'city',
-    bosUrl: 'https://www.rva.gov/city-council',
-    schoolBoardUrl: 'https://www.rvaschools.net/our-district/school-board',
+    bosUrl: 'https://www.rva.gov/richmond-city-council',
+    schoolBoardUrl: 'https://www.rvaschools.net/school-board',
     cms: 'wordpress',
   },
 ];

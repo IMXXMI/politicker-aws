@@ -3,7 +3,7 @@
  * each configured source with multiple extraction strategies. Best-effort — states
  * that fail get logged and skipped.
  */
-const { nameTokens, makeId } = require('../../common/firestore');
+const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const stateConfigs = require('./stateConfigs');
 
 const HEADERS = { 'User-Agent': 'politicker-scraper/1.0 (civic data; admin@politickerapp.com)' };
@@ -388,14 +388,17 @@ async function scrape() {
             const firestoreCat = categoryToFirestore[cat];
             const seen = new Set();
             for (const r of usacopsResults) {
-              const key = `${stateCode}|${r.name}`.toLowerCase();
+              const cleaned = cleanName(r.name);
+              if (!cleaned) continue;
+              const key = `${stateCode}|${cleaned}`.toLowerCase();
               if (seen.has(key)) continue;
               seen.add(key);
+              const { locality, localityLower } = normalizeLocality(r.locality);
               allItems.push({
-                id: makeId(stateCode, firestoreCat, (r.locality || '').toLowerCase(), r.name.toLowerCase()),
+                id: makeId(stateCode, firestoreCat, (locality || '').toLowerCase(), cleaned.toLowerCase()),
                 data: {
-                  category: firestoreCat, state: stateCode, locality: r.locality || null, localityLower: (r.locality || '').toLowerCase().replace(/\s+(county|parish|borough|city)$/i, '').trim(),
-                  office: officeLabels[cat], name: r.name, nameTokens: nameTokens(r.name),
+                  category: firestoreCat, state: stateCode, locality, localityLower,
+                  office: officeLabels[cat], name: cleaned, nameTokens: nameTokens(cleaned),
                   party: null, tookOffice: null, termEnds: null, contact: {},
                   photo: null, sourceUrl: `https://www.usacops.com/${stateCode.toLowerCase()}/shrflist.html`,
                   castsVotes: false, voteRecordsUrl: null,
@@ -412,7 +415,7 @@ async function scrape() {
       if (!catConfig.url) continue;
       try {
         stats.fetched++;
-        const results = await fetchAndExtract(catConfig.url, catConfig.strategies);
+        let results = await fetchAndExtract(catConfig.url, catConfig.strategies);
         if (results.length === 0) {
           // Fallback: try USACOPS.com for sheriffs (works for all states, simple HTML)
           if (cat === 'sheriffs') {
@@ -432,18 +435,22 @@ async function scrape() {
         const seen = new Set();
         const firestoreCat = categoryToFirestore[cat];
         for (const r of results) {
-          const key = `${stateCode}|${r.name}`.toLowerCase();
+          const cleaned = cleanName(r.name);
+          if (!cleaned) continue;
+          const key = `${stateCode}|${cleaned}`.toLowerCase();
           if (seen.has(key)) continue;
           seen.add(key);
+          const { locality, localityLower } = normalizeLocality(r.locality);
           allItems.push({
-            id: makeId(stateCode, firestoreCat, (r.locality || '').toLowerCase(), r.name.toLowerCase()),
+            id: makeId(stateCode, firestoreCat, (locality || '').toLowerCase(), cleaned.toLowerCase()),
             data: {
               category: firestoreCat,
               state: stateCode,
-              locality: r.locality || null,
+              locality,
+              localityLower,
               office: officeLabels[cat],
-              name: r.name,
-              nameTokens: nameTokens(r.name),
+              name: cleaned,
+              nameTokens: nameTokens(cleaned),
               party: null,
               tookOffice: null,
               termEnds: null,

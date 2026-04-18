@@ -5,50 +5,45 @@ Amplify Params - DO NOT EDIT */
 
 /**
  * stateOfficialsIngest dispatcher.
- * Runs each state's scrapers in sequence, merges results into Firestore collection `stateOfficials`.
- * Accept event payload { state?: 'VA' } to limit to one state; otherwise runs all registered states.
+ *
+ * Data priority (highest → lowest):
+ *   1. Per-state deep scrapers (VA) — most detailed, hand-tuned per locality
+ *   2. Socrata Discovery — structured API data with locality, contact, office
+ *   3. Wikidata / AllStates / national sheriffs — broad but sparse gap-fill
+ *
+ * Socrata and deep scrapers use batchedWrite (full merge — they win on every field).
+ * Everything else uses batchedGapFill (only creates docs that don't already exist).
  */
-const { batchedWrite } = require('./common/firestore');
-const vaScraper = require('./scrapers/va');
+const { batchedWrite, batchedGapFill } = require('./common/firestore');
 const wikidataNational = require('./scrapers/national/wikidata');
 const nationalSheriffs = require('./scrapers/national/sheriffs');
 const allStatesEngine = require('./scrapers/national/allStates');
-const socrataDiscovery = require('./scrapers/national/socrata'); // v2 — Socrata API discovery
+const socrataDiscovery = require('./scrapers/national/socrata');
 
 const STATE_SCRAPERS = {
-  VA: vaScraper,
-  // Future: NY: require('./scrapers/ny'), TX: require('./scrapers/tx'), etc.
+  CA: require('./scrapers/ca'),
+  TX: require('./scrapers/tx'),
+  FL: require('./scrapers/fl'),
+  NY: require('./scrapers/ny'),
+  PA: require('./scrapers/pa'),
+  IL: require('./scrapers/il'),
+  VA: require('./scrapers/va'),
 };
 
 exports.handler = async (event) => {
   console.log('stateOfficialsIngest invoked:', event?.source || 'manual');
   const onlyState = (event?.state || '').toUpperCase();
   const skipNational = event?.skipNational === true;
-  const onlySocrata = event?.onlySocrata === true;  // Run ONLY Socrata discovery (for separate invocation)
-  const skipSocrata = event?.skipSocrata === true;   // Skip Socrata (default for combined runs to avoid timeout)
+  const onlySocrata = event?.onlySocrata === true;
+  const skipSocrata = event?.skipSocrata === true;
   const summary = { ok: true, national: null, states: {} };
 
   try {
-    // 1) National bulk layers: Wikidata SPARQL + sheriff association directories
+    // ── 1. National layers ──────────────────────────────────────────────
     if (!skipNational && !onlyState) {
       summary.national = {};
 
-      // Wikidata (county executives, judges, misc)
-      console.log('=== NATIONAL: Wikidata ===');
-      try {
-        const wdItems = await wikidataNational.scrape();
-        if (wdItems.length > 0) {
-          const w = await batchedWrite('stateOfficials', wdItems);
-          summary.national.wikidata = { fetched: wdItems.length, written: w };
-        } else {
-          summary.national.wikidata = { fetched: 0, written: 0 };
-        }
-      } catch (e) {
-        console.warn('Wikidata national failed:', e.message);
-        summary.national.wikidata = { error: e.message };
-      }
-
-      // Socrata-only mode: skip everything else
+      // Socrata-only mode (separate invocation for just Socrata)
       if (onlySocrata) {
         console.log('=== SOCRATA ONLY MODE ===');
         try {
@@ -66,7 +61,7 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify(summary) };
       }
 
-      // Socrata runs FIRST — clean structured data from state APIs (primary source)
+      // ── 1a. Socrata FIRST — primary source, full merge write ──────────
       if (!skipSocrata) {
         console.log('=== NATIONAL: Socrata Discovery (PRIMARY) ===');
         try {
@@ -83,12 +78,27 @@ exports.handler = async (event) => {
         }
       }
 
-      // HTML scrapers fill gaps — only adds records Socrata didn't cover (merge:true = won't overwrite Socrata's richer data)
+      // ── 1b. Gap-fill layers — only create docs Socrata didn't cover ───
+
+      console.log('=== NATIONAL: Wikidata (gap-fill) ===');
+      try {
+        const wdItems = await wikidataNational.scrape();
+        if (wdItems.length > 0) {
+          const w = await batchedGapFill('stateOfficials', wdItems);
+          summary.national.wikidata = { fetched: wdItems.length, written: w };
+        } else {
+          summary.national.wikidata = { fetched: 0, written: 0 };
+        }
+      } catch (e) {
+        console.warn('Wikidata national failed:', e.message);
+        summary.national.wikidata = { error: e.message };
+      }
+
       console.log('=== NATIONAL: All-States Engine (gap-fill) ===');
       try {
         const stateItems = await allStatesEngine.scrape();
         if (stateItems.length > 0) {
-          const w = await batchedWrite('stateOfficials', stateItems);
+          const w = await batchedGapFill('stateOfficials', stateItems);
           summary.national.allStates = { fetched: stateItems.length, written: w };
         } else {
           summary.national.allStates = { fetched: 0, written: 0 };
@@ -99,7 +109,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // 2) Per-state deep scrapers (registry-driven, more detailed than Wikidata)
+    // ── 2. Per-state deep scrapers — full merge write (highest priority) ─
     const targets = onlyState ? [onlyState].filter((s) => STATE_SCRAPERS[s]) : Object.keys(STATE_SCRAPERS);
     for (const state of targets) {
       console.log(`--- ${state} (deep scraper) ---`);

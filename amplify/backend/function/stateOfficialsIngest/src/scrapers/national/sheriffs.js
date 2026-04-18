@@ -7,7 +7,7 @@
  *
  * States with no URL in the registry are skipped. States that 404 or parse-fail are logged.
  */
-const { nameTokens, makeId } = require('../../common/firestore');
+const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const registry = require('./registry');
 
 const HEADERS = { 'User-Agent': 'politicker-scraper/1.0 (civic data; admin@politickerapp.com)' };
@@ -147,18 +147,22 @@ async function scrape() {
       parsed++;
       const seen = new Set();
       for (const r of best) {
-        const key = `${stateCode}|${r.name}`.toLowerCase();
+        const cleaned = cleanName(r.name);
+        if (!cleaned) continue;
+        const key = `${stateCode}|${cleaned}`.toLowerCase();
         if (seen.has(key)) continue;
         seen.add(key);
+        const { locality, localityLower } = normalizeLocality(r.locality);
         allItems.push({
-          id: makeId(stateCode, 'sheriff', (r.locality || '').toLowerCase(), r.name.toLowerCase()),
+          id: makeId(stateCode, 'sheriff', (locality || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'sheriff',
             state: stateCode,
-            locality: r.locality || null,
+            locality,
+            localityLower,
             office: 'Sheriff',
-            name: r.name,
-            nameTokens: nameTokens(r.name),
+            name: cleaned,
+            nameTokens: nameTokens(cleaned),
             party: null,
             tookOffice: r.startDate,
             termEnds: null,

@@ -1,11 +1,13 @@
 /**
- * VA county Boards of Supervisors + city Councils for top-10 VA localities.
+ * NY county Legislatures + NYC City Council for top-10 NY counties.
  * Uses the shared localities registry + generic extractor. Each locality that fails (404, parsing
  * found nothing) is logged but doesn't crash the scraper.
+ *
+ * NY uses "County Legislature" for non-NYC counties and "City Council" for NYC boroughs.
  */
 const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const localities = require('./localities');
-const { fetchHtml, extractMembers } = require('./extractor');
+const { fetchHtml, extractMembers } = require('../va/extractor');
 
 async function scrape() {
   const items = [];
@@ -16,12 +18,12 @@ async function scrape() {
       let members;
       if (loc.bosMembers && loc.bosMembers.length > 0) {
         members = loc.bosMembers;
-        console.log(`  [BoS] ${loc.locality}: using ${members.length} hardcoded members`);
+        console.log(`  [CountyBoard] ${loc.locality}: using ${members.length} hardcoded members`);
       } else {
         const html = await fetchHtml(loc.bosUrl);
         members = extractMembers(html);
         if (members.length === 0) {
-          console.warn(`  [BoS] ${loc.locality}: page fetched but no members extracted`);
+          console.warn(`  [CountyBoard] ${loc.locality}: page fetched but no members extracted`);
           continue;
         }
       }
@@ -29,12 +31,14 @@ async function scrape() {
       for (const mem of members) {
         const cleaned = cleanName(mem.name);
         if (!cleaned) continue;
-        const office = loc.kind === 'city' ? 'City Council Member' : 'Board of Supervisors Member';
+        const office = loc.kind === 'borough'
+          ? 'City Council Member'
+          : 'County Legislator';
         items.push({
-          id: makeId('VA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
+          id: makeId('NY', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'county-board',
-            state: 'VA',
+            state: 'NY',
             locality: normLoc,
             localityLower,
             office: mem.role ? `${office} (${mem.role})` : office,
@@ -52,12 +56,12 @@ async function scrape() {
           },
         });
       }
-      console.log(`  [BoS] ${loc.locality}: ${members.length} members`);
+      console.log(`  [CountyBoard] ${loc.locality}: ${members.length} members`);
     } catch (e) {
-      console.warn(`  [BoS] ${loc.locality}: ${e.message}`);
+      console.warn(`  [CountyBoard] ${loc.locality}: ${e.message}`);
     }
   }
-  console.log(`VA county boards total: ${items.length}`);
+  console.log(`NY county boards total: ${items.length}`);
   return items;
 }
 

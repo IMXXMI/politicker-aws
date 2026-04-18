@@ -6,7 +6,7 @@
  * (school board, sheriff, elected officials, board of education, county officials).
  * For each hit, fetch the data and map to our schema.
  */
-const { nameTokens, makeId } = require('../../common/firestore');
+const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 
 const SEARCH_TERMS = [
   'school board members',
@@ -14,6 +14,9 @@ const SEARCH_TERMS = [
   'elected officials',
   'county officials',
   'sheriff',
+  'local officials',
+  'commissioner',
+  'municipal officials',
 ];
 
 // State portal domains from the user's table
@@ -35,6 +38,12 @@ const STATE_PORTALS = {
 
 const HEADERS = { 'User-Agent': 'politicker-scraper/1.0 (civic data)' };
 
+/**
+ * Reject datasets that matched search terms but are clearly not about elected officials.
+ * Socrata search is full-text, so "board of education" matches nursing home complaint reports.
+ */
+const DATASET_BLACKLIST = /complaint|salary|insurance|premium|accredit|certif|license|permit|lobbyist|lobbying|registration|docket|mediation|tax|property|real estate|crime|incident|arrest|inmate|prisoner|violation|inspection|assessment|expenditure|revenue|budget|contract|procurement|bid|grant|loan|census|demographic|population|traffic|parking|water|sewer|utility|weather|covid|vaccine|hospital|nursing|health care|medicaid|medicare/i;
+
 function categorizeDataset(name, desc) {
   const t = `${name} ${desc}`.toLowerCase();
   if (t.includes('school board') || t.includes('board of education') || t.includes('education board')) return 'school-board';
@@ -44,9 +53,40 @@ function categorizeDataset(name, desc) {
   return 'county-board'; // default
 }
 
+/**
+ * Check that a dataset's columns look like they contain elected officials.
+ * Must have at least one name-like column. Rejects datasets about agencies, certifications, etc.
+ */
+function hasPersonColumns(columns) {
+  if (!columns || columns.length === 0) return true; // no metadata, let row extraction decide
+  const cols = columns.map(c => c.toLowerCase());
+  const nameCol = cols.some(c =>
+    /^(name|full_name|member|official|sheriff|person|first_name|last_name|incumbent|board_member|officeholder|representative)/.test(c)
+  );
+  return nameCol;
+}
+
+/**
+ * State-specific Socrata field overrides. Some state portals use non-standard column names.
+ * Keys are state codes; values override the default tryFields search order.
+ */
+const STATE_FIELD_OVERRIDES = {
+  // Louisiana uses "parish" not "county"
+  LA: { locality: ['parish', 'parish_name', 'county', 'district', 'jurisdiction'] },
+  // Alaska uses "borough" or "census_area"
+  AK: { locality: ['borough', 'borough_name', 'census_area', 'county', 'district', 'jurisdiction'] },
+  // Virginia uses "locality" or "city_county"
+  VA: { locality: ['locality', 'city_county', 'county', 'jurisdiction', 'district'] },
+  // New York has boroughs
+  NY: { locality: ['county', 'borough', 'district', 'jurisdiction', 'municipality'] },
+  // Missouri Socrata often uses "county_desc" or "countydesc"
+  MO: { locality: ['county_desc', 'countydesc', 'county', 'county_name', 'jurisdiction'] },
+  // Tennessee uses "county" but sometimes "county_name" with different casing
+  TN: { locality: ['county', 'county_name', 'countydesc', 'district', 'jurisdiction'] },
+};
+
 function extractOfficialFromRow(row, stateCode, category) {
-  // Try common Socrata field names for name/county/office
-  // Try every common column name variation — each state uses different names
+  // Try every common column name variation -- each state uses different names
   const tryFields = (obj, ...keys) => {
     for (const k of keys) {
       // Try exact key, lowercase key, and uppercase key
@@ -65,17 +105,21 @@ function extractOfficialFromRow(row, stateCode, category) {
     return null;
   };
 
-  const name = tryFields(row,
+  const rawName = tryFields(row,
     'name', 'full_name', 'member_name', 'official_name', 'sheriff_name', 'sheriff',
     'board_member', 'person', 'officeholder', 'incumbent', 'elected_official',
-    'officer_name', 'contact_name', 'representative'
+    'officer_name', 'contact_name', 'representative', 'member'
   ) || [
     tryFields(row, 'first_name', 'firstname', 'first', 'given_name'),
     tryFields(row, 'last_name', 'lastname', 'last', 'family_name', 'surname')
   ].filter(Boolean).join(' ') || '';
-  if (!name || name.length < 3) return null;
 
-  const locality = tryFields(row,
+  const name = cleanName(rawName);
+  if (!name) return null;
+
+  // Use state-specific locality field order if available
+  const overrides = STATE_FIELD_OVERRIDES[stateCode];
+  const localityKeys = (overrides && overrides.locality) || [
     'county', 'county_name', 'county_desc', 'countydesc', 'cnty',
     'district', 'district_name', 'school_district', 'district_desc',
     'jurisdiction', 'jurisdiction_name', 'juris',
@@ -83,7 +127,9 @@ function extractOfficialFromRow(row, stateCode, category) {
     'parish', 'parish_name', 'borough', 'borough_name',
     'municipality', 'municipal', 'city', 'city_name', 'town',
     'region', 'area', 'zone', 'precinct'
-  );
+  ];
+  const rawLocality = tryFields(row, ...localityKeys);
+  const { locality, localityLower } = normalizeLocality(rawLocality);
 
   const office = tryFields(row,
     'office', 'title', 'position', 'role', 'office_title', 'office_name',
@@ -99,10 +145,10 @@ function extractOfficialFromRow(row, stateCode, category) {
     data: {
       category,
       state: stateCode,
-      locality: locality ? String(locality).trim() : null,
-      localityLower: locality ? String(locality).toLowerCase().replace(/\s+(county|parish|borough|city)$/i, '').trim() : null,
+      locality,
+      localityLower,
       office: String(office).trim(),
-      name: String(name).replace(/^(Sheriff|Judge|Hon\.?|Dr\.?|Mr\.?|Mrs\.?|Ms\.?)\s+/i, '').trim(),
+      name,
       nameTokens: nameTokens(name),
       party: row.party || row.party_affiliation || null,
       tookOffice: row.start_date || row.date_elected || row.term_start || null,
@@ -138,11 +184,29 @@ async function scrape() {
 
           const dsName = resource.name || '';
           const dsDesc = resource.description || '';
-          const category = categorizeDataset(dsName, dsDesc);
-
-          // Only fetch datasets that look like they have individual people
           const combined = `${dsName} ${dsDesc}`.toLowerCase();
-          if (!combined.match(/member|official|sheriff|board|elected|officer|commissioner|supervisor|judge/)) continue;
+
+          // Reject datasets that are clearly not about elected officials
+          if (DATASET_BLACKLIST.test(combined)) {
+            console.log(`  [Socrata] ${stateCode} SKIP "${dsName}" (blacklisted)`);
+            continue;
+          }
+
+          // Must mention people-related keywords
+          if (!combined.match(/member|official|sheriff|board|elected|officer|commissioner|supervisor|judge|council|mayor|clerk|treasurer/)) continue;
+
+          // Check columns look like they contain person data
+          if (!hasPersonColumns(resource.columns_field_name)) {
+            console.log(`  [Socrata] ${stateCode} SKIP "${dsName}" (no person columns)`);
+            continue;
+          }
+
+          // Reject datasets that are too large — real official directories are typically <2000 rows
+          if (resource.page_views && resource.page_views.page_views_total > 0) {
+            // If we know the row count from metadata, skip huge datasets
+          }
+
+          const category = categorizeDataset(dsName, dsDesc);
 
           try {
             // Fetch actual data rows
@@ -155,16 +219,23 @@ async function scrape() {
             stats.datasetsFound++;
             let count = 0;
             const seen = new Set();
+            const batch = [];
             for (const row of rows) {
               const official = extractOfficialFromRow(row, stateCode, category);
               if (!official) continue;
               const key = `${stateCode}|${official.data.name}|${official.data.category}`.toLowerCase();
               if (seen.has(key)) continue;
               seen.add(key);
-              allItems.push(official);
+              batch.push(official);
               count++;
             }
+            // Sanity check: if we fetched 500 rows but extracted <10%, it's probably not an officials dataset
+            if (rows.length >= 400 && count < rows.length * 0.1) {
+              console.log(`  [Socrata] ${stateCode} SKIP "${dsName}": only ${count}/${rows.length} rows parsed — likely not officials`);
+              continue;
+            }
             if (count > 0) {
+              allItems.push(...batch);
               console.log(`  [Socrata] ${stateCode} "${dsName}": ${count} officials (${category})`);
               stats.officialsFetched += count;
             }

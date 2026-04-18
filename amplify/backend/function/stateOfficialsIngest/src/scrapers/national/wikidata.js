@@ -7,7 +7,7 @@
  *
  * This is a seed layer — per-state scrapers (like VA) add deeper coverage on top.
  */
-const { nameTokens, makeId } = require('../../common/firestore');
+const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 
@@ -110,8 +110,11 @@ async function scrape() {
   const seen = new Set();
 
   for (const b of bindings) {
-    const name = b.personLabel?.value;
-    if (!name || name.startsWith('Q')) continue; // skip unresolved QIDs
+    const rawName = b.personLabel?.value;
+    if (!rawName || rawName.startsWith('Q')) continue; // skip unresolved QIDs
+
+    const name = cleanName(rawName);
+    if (!name) continue;
 
     const posLabel = b.positionLabel?.value || '';
     const jurisdictionLabel = b.jurisdictionLabel?.value || '';
@@ -124,12 +127,15 @@ async function scrape() {
     if (seen.has(key)) continue;
     seen.add(key);
 
+    const { locality, localityLower } = normalizeLocality(jurisdictionLabel);
+
     items.push({
-      id: makeId(stateCode, category, jurisdictionLabel.toLowerCase(), name.toLowerCase()),
+      id: makeId(stateCode, category, (locality || '').toLowerCase(), name.toLowerCase()),
       data: {
         category,
         state: stateCode,
-        locality: jurisdictionLabel || null,
+        locality,
+        localityLower,
         office,
         name,
         nameTokens: nameTokens(name),

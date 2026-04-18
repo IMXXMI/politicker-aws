@@ -1,11 +1,12 @@
 /**
- * VA county Boards of Supervisors + city Councils for top-10 VA localities.
- * Uses the shared localities registry + generic extractor. Each locality that fails (404, parsing
- * found nothing) is logged but doesn't crash the scraper.
+ * FL County Commissions for top-10 FL counties. FL uses "County Commission" rather than
+ * "Board of Supervisors" — office title is "County Commissioner".
+ * Uses the shared localities registry + generic extractor from VA.
+ * Per-locality failures are logged but don't crash the scraper.
  */
 const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const localities = require('./localities');
-const { fetchHtml, extractMembers } = require('./extractor');
+const { fetchHtml, extractMembers } = require('../va/extractor');
 
 async function scrape() {
   const items = [];
@@ -16,12 +17,12 @@ async function scrape() {
       let members;
       if (loc.bosMembers && loc.bosMembers.length > 0) {
         members = loc.bosMembers;
-        console.log(`  [BoS] ${loc.locality}: using ${members.length} hardcoded members`);
+        console.log(`  [CountyBoard] ${loc.locality}: using ${members.length} hardcoded members`);
       } else {
         const html = await fetchHtml(loc.bosUrl);
         members = extractMembers(html);
         if (members.length === 0) {
-          console.warn(`  [BoS] ${loc.locality}: page fetched but no members extracted`);
+          console.warn(`  [CountyBoard] ${loc.locality}: page fetched but no members extracted`);
           continue;
         }
       }
@@ -29,15 +30,15 @@ async function scrape() {
       for (const mem of members) {
         const cleaned = cleanName(mem.name);
         if (!cleaned) continue;
-        const office = loc.kind === 'city' ? 'City Council Member' : 'Board of Supervisors Member';
+        const office = mem.role ? `County Commissioner (${mem.role})` : 'County Commissioner';
         items.push({
-          id: makeId('VA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
+          id: makeId('FL', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'county-board',
-            state: 'VA',
+            state: 'FL',
             locality: normLoc,
             localityLower,
-            office: mem.role ? `${office} (${mem.role})` : office,
+            office,
             name: cleaned,
             nameTokens: nameTokens(cleaned),
             party: null,
@@ -52,12 +53,12 @@ async function scrape() {
           },
         });
       }
-      console.log(`  [BoS] ${loc.locality}: ${members.length} members`);
+      console.log(`  [CountyBoard] ${loc.locality}: ${members.length} members`);
     } catch (e) {
-      console.warn(`  [BoS] ${loc.locality}: ${e.message}`);
+      console.warn(`  [CountyBoard] ${loc.locality}: ${e.message}`);
     }
   }
-  console.log(`VA county boards total: ${items.length}`);
+  console.log(`FL county boards total: ${items.length}`);
   return items;
 }
 

@@ -1,27 +1,29 @@
 /**
- * VA county Boards of Supervisors + city Councils for top-10 VA localities.
+ * PA County Councils / Boards of Commissioners for top-10 PA counties.
  * Uses the shared localities registry + generic extractor. Each locality that fails (404, parsing
  * found nothing) is logged but doesn't crash the scraper.
+ *
+ * PA counties use either "County Council" (home-rule charter counties like Philadelphia,
+ * Allegheny, Delaware) or "Board of Commissioners" (standard counties).
  */
 const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const localities = require('./localities');
-const { fetchHtml, extractMembers } = require('./extractor');
+const { fetchHtml, extractMembers } = require('../va/extractor');
 
 async function scrape() {
   const items = [];
   for (const loc of localities) {
     if (!loc.bosUrl && !loc.bosMembers) continue;
     try {
-      // Use hardcoded members if available (most reliable); fall back to scraping
       let members;
       if (loc.bosMembers && loc.bosMembers.length > 0) {
         members = loc.bosMembers;
-        console.log(`  [BoS] ${loc.locality}: using ${members.length} hardcoded members`);
+        console.log(`  [CountyBoard] ${loc.locality}: using ${members.length} hardcoded members`);
       } else {
         const html = await fetchHtml(loc.bosUrl);
         members = extractMembers(html);
         if (members.length === 0) {
-          console.warn(`  [BoS] ${loc.locality}: page fetched but no members extracted`);
+          console.warn(`  [CountyBoard] ${loc.locality}: page fetched but no members extracted`);
           continue;
         }
       }
@@ -29,15 +31,17 @@ async function scrape() {
       for (const mem of members) {
         const cleaned = cleanName(mem.name);
         if (!cleaned) continue;
-        const office = loc.kind === 'city' ? 'City Council Member' : 'Board of Supervisors Member';
+        // Use the county-specific board label (County Council vs Board of Commissioners)
+        const baseOffice = loc.boardLabel || 'Board of Commissioners';
+        const officeTitle = `${baseOffice} Member`;
         items.push({
-          id: makeId('VA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
+          id: makeId('PA', 'county-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'county-board',
-            state: 'VA',
+            state: 'PA',
             locality: normLoc,
             localityLower,
-            office: mem.role ? `${office} (${mem.role})` : office,
+            office: mem.role ? `${officeTitle} (${mem.role})` : officeTitle,
             name: cleaned,
             nameTokens: nameTokens(cleaned),
             party: null,
@@ -52,12 +56,12 @@ async function scrape() {
           },
         });
       }
-      console.log(`  [BoS] ${loc.locality}: ${members.length} members`);
+      console.log(`  [CountyBoard] ${loc.locality}: ${members.length} members`);
     } catch (e) {
-      console.warn(`  [BoS] ${loc.locality}: ${e.message}`);
+      console.warn(`  [CountyBoard] ${loc.locality}: ${e.message}`);
     }
   }
-  console.log(`VA county boards total: ${items.length}`);
+  console.log(`PA county boards total: ${items.length}`);
   return items;
 }
 

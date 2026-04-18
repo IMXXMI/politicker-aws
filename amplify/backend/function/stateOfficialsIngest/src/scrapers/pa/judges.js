@@ -1,28 +1,26 @@
 /**
- * VA state judges via CourtListener (free, CORS-friendly, reliable).
- * Pulls all currently-serving judges in VA state courts:
- *   - Supreme Court of Virginia (court id: va)
- *   - Court of Appeals of Virginia (court id: vactapp)
- *   - VA state trial courts tracked by CourtListener
+ * PA state judges via CourtListener (free, CORS-friendly, reliable).
+ * Pulls all currently-serving judges in PA state courts:
+ *   - Supreme Court of Pennsylvania (court id: pa)
+ *   - Superior Court of Pennsylvania (court id: pasuperct)
  */
 const { nameTokens, makeId, cleanName } = require('../../common/firestore');
 
-const VA_STATE_COURT_IDS = [
-  'va',       // Supreme Court of Virginia
-  'vactapp',  // Court of Appeals of Virginia
-  // Circuit / district courts (add as CourtListener expands coverage)
+const PA_STATE_COURT_IDS = [
+  'pa',         // Supreme Court of Pennsylvania
+  'pasuperct',  // Superior Court of Pennsylvania
 ];
 
 const COURT_LABELS = {
-  va: 'Supreme Court of Virginia',
-  vactapp: 'Court of Appeals of Virginia',
+  pa: 'Supreme Court of Pennsylvania',
+  pasuperct: 'Superior Court of Pennsylvania',
 };
 
 async function scrape() {
   const items = [];
   const seen = new Set();
 
-  for (const courtId of VA_STATE_COURT_IDS) {
+  for (const courtId of PA_STATE_COURT_IDS) {
     try {
       const url = `https://www.courtlistener.com/api/rest/v4/positions/?court__id=${courtId}&page_size=100`;
       const res = await fetch(url, { headers: { 'User-Agent': 'politicker-scraper/1.0' } });
@@ -53,10 +51,10 @@ async function scrape() {
         seen.add(key);
 
         items.push({
-          id: makeId('VA', 'state-judge', courtId, fullName.toLowerCase()),
+          id: makeId('PA', 'state-judge', courtId, fullName.toLowerCase()),
           data: {
             category: 'state-judge',
-            state: 'VA',
+            state: 'PA',
             locality: null,
             localityLower: null,
             office: COURT_LABELS[courtId] || `Court: ${courtId}`,
@@ -70,20 +68,20 @@ async function scrape() {
             },
             photo: null,
             sourceUrl: `https://www.courtlistener.com${person.absolute_url || ''}`,
-            castsVotes: true,                    // judges cast rulings (treated as votes for UI)
+            castsVotes: true,
             voteRecordsUrl: `https://www.courtlistener.com/opinion/?type=o&court=${courtId}`,
             courtListenerPersonId: person.id,
             courtId,
           },
         });
       }
-      console.log(`VA court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
+      console.log(`PA court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
     } catch (e) {
-      console.warn(`VA judges ${courtId} error:`, e.message);
+      console.warn(`PA judges ${courtId} error:`, e.message);
     }
   }
 
-  console.log(`VA state judges total: ${items.length}`);
+  console.log(`PA state judges total: ${items.length}`);
   return items;
 }
 

@@ -1,28 +1,26 @@
 /**
- * VA state judges via CourtListener (free, CORS-friendly, reliable).
- * Pulls all currently-serving judges in VA state courts:
- *   - Supreme Court of Virginia (court id: va)
- *   - Court of Appeals of Virginia (court id: vactapp)
- *   - VA state trial courts tracked by CourtListener
+ * TX state judges via CourtListener (free, CORS-friendly, reliable).
+ * Pulls all currently-serving judges in TX state courts:
+ *   - Supreme Court of Texas (court id: tex)
+ *   - TX Court of Criminal Appeals (court id: texcrimapp)
  */
 const { nameTokens, makeId, cleanName } = require('../../common/firestore');
 
-const VA_STATE_COURT_IDS = [
-  'va',       // Supreme Court of Virginia
-  'vactapp',  // Court of Appeals of Virginia
-  // Circuit / district courts (add as CourtListener expands coverage)
+const TX_STATE_COURT_IDS = [
+  'tex',         // Supreme Court of Texas
+  'texcrimapp',  // TX Court of Criminal Appeals
 ];
 
 const COURT_LABELS = {
-  va: 'Supreme Court of Virginia',
-  vactapp: 'Court of Appeals of Virginia',
+  tex: 'Supreme Court of Texas',
+  texcrimapp: 'Texas Court of Criminal Appeals',
 };
 
 async function scrape() {
   const items = [];
   const seen = new Set();
 
-  for (const courtId of VA_STATE_COURT_IDS) {
+  for (const courtId of TX_STATE_COURT_IDS) {
     try {
       const url = `https://www.courtlistener.com/api/rest/v4/positions/?court__id=${courtId}&page_size=100`;
       const res = await fetch(url, { headers: { 'User-Agent': 'politicker-scraper/1.0' } });
@@ -53,10 +51,10 @@ async function scrape() {
         seen.add(key);
 
         items.push({
-          id: makeId('VA', 'state-judge', courtId, fullName.toLowerCase()),
+          id: makeId('TX', 'state-judge', courtId, fullName.toLowerCase()),
           data: {
             category: 'state-judge',
-            state: 'VA',
+            state: 'TX',
             locality: null,
             localityLower: null,
             office: COURT_LABELS[courtId] || `Court: ${courtId}`,
@@ -70,20 +68,20 @@ async function scrape() {
             },
             photo: null,
             sourceUrl: `https://www.courtlistener.com${person.absolute_url || ''}`,
-            castsVotes: true,                    // judges cast rulings (treated as votes for UI)
+            castsVotes: true,
             voteRecordsUrl: `https://www.courtlistener.com/opinion/?type=o&court=${courtId}`,
             courtListenerPersonId: person.id,
             courtId,
           },
         });
       }
-      console.log(`VA court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
+      console.log(`TX court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
     } catch (e) {
-      console.warn(`VA judges ${courtId} error:`, e.message);
+      console.warn(`TX judges ${courtId} error:`, e.message);
     }
   }
 
-  console.log(`VA state judges total: ${items.length}`);
+  console.log(`TX state judges total: ${items.length}`);
   return items;
 }
 

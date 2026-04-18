@@ -1,10 +1,10 @@
 /**
- * VA school board members for top-10 VA localities. Same pattern as countyBoards.js —
+ * IL school board members for top-10 IL counties. Same pattern as countyBoards.js —
  * registry-driven, generic extractor, per-locality failures logged not thrown.
  */
 const { nameTokens, makeId, normalizeLocality, cleanName } = require('../../common/firestore');
 const localities = require('./localities');
-const { fetchHtml, extractMembers } = require('./extractor');
+const { fetchHtml, extractMembers } = require('../va/extractor');
 
 async function scrape() {
   const items = [];
@@ -29,10 +29,10 @@ async function scrape() {
         if (!cleaned) continue;
         const office = mem.role ? `School Board Member (${mem.role})` : 'School Board Member';
         items.push({
-          id: makeId('VA', 'school-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
+          id: makeId('IL', 'school-board', (normLoc || '').toLowerCase(), cleaned.toLowerCase()),
           data: {
             category: 'school-board',
-            state: 'VA',
+            state: 'IL',
             locality: normLoc,
             localityLower,
             office,
@@ -55,7 +55,7 @@ async function scrape() {
       console.warn(`  [SchoolBoard] ${loc.locality}: ${e.message}`);
     }
   }
-  console.log(`VA school boards total: ${items.length}`);
+  console.log(`IL school boards total: ${items.length}`);
   return items;
 }
 

@@ -1,28 +1,26 @@
 /**
- * VA state judges via CourtListener (free, CORS-friendly, reliable).
- * Pulls all currently-serving judges in VA state courts:
- *   - Supreme Court of Virginia (court id: va)
- *   - Court of Appeals of Virginia (court id: vactapp)
- *   - VA state trial courts tracked by CourtListener
+ * NY state judges via CourtListener (free, CORS-friendly, reliable).
+ * Pulls all currently-serving judges in NY state courts:
+ *   - NY Court of Appeals (court id: ny)
+ *   - NY Appellate Division (court id: nyappdiv)
  */
 const { nameTokens, makeId, cleanName } = require('../../common/firestore');
 
-const VA_STATE_COURT_IDS = [
-  'va',       // Supreme Court of Virginia
-  'vactapp',  // Court of Appeals of Virginia
-  // Circuit / district courts (add as CourtListener expands coverage)
+const NY_STATE_COURT_IDS = [
+  'ny',        // New York Court of Appeals
+  'nyappdiv',  // New York Appellate Division
 ];
 
 const COURT_LABELS = {
-  va: 'Supreme Court of Virginia',
-  vactapp: 'Court of Appeals of Virginia',
+  ny: 'New York Court of Appeals',
+  nyappdiv: 'New York Appellate Division',
 };
 
 async function scrape() {
   const items = [];
   const seen = new Set();
 
-  for (const courtId of VA_STATE_COURT_IDS) {
+  for (const courtId of NY_STATE_COURT_IDS) {
     try {
       const url = `https://www.courtlistener.com/api/rest/v4/positions/?court__id=${courtId}&page_size=100`;
       const res = await fetch(url, { headers: { 'User-Agent': 'politicker-scraper/1.0' } });
@@ -53,10 +51,10 @@ async function scrape() {
         seen.add(key);
 
         items.push({
-          id: makeId('VA', 'state-judge', courtId, fullName.toLowerCase()),
+          id: makeId('NY', 'state-judge', courtId, fullName.toLowerCase()),
           data: {
             category: 'state-judge',
-            state: 'VA',
+            state: 'NY',
             locality: null,
             localityLower: null,
             office: COURT_LABELS[courtId] || `Court: ${courtId}`,
@@ -70,20 +68,20 @@ async function scrape() {
             },
             photo: null,
             sourceUrl: `https://www.courtlistener.com${person.absolute_url || ''}`,
-            castsVotes: true,                    // judges cast rulings (treated as votes for UI)
+            castsVotes: true,
             voteRecordsUrl: `https://www.courtlistener.com/opinion/?type=o&court=${courtId}`,
             courtListenerPersonId: person.id,
             courtId,
           },
         });
       }
-      console.log(`VA court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
+      console.log(`NY court ${courtId}: ${positions.length} positions, ${items.length} total so far`);
     } catch (e) {
-      console.warn(`VA judges ${courtId} error:`, e.message);
+      console.warn(`NY judges ${courtId} error:`, e.message);
     }
   }
 
-  console.log(`VA state judges total: ${items.length}`);
+  console.log(`NY state judges total: ${items.length}`);
   return items;
 }
 
